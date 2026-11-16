@@ -1,0 +1,698 @@
+/*
+ * Given an AOI geometry (map CRS) and the LiDAR phase(s)/collections to search -- across one or
+ * more STAC API sources (currently only KyFromAbove, see SourceCollections) --
+ * three output modes are supported (see the dock pane's Output section -- fastest to
+ * most disk-hungry):
+ *   - DownloadTilesOnlyAsync: search the STAC catalog and download each matching tile's raw file
+ *     (COPC or plain LAZ) as-is -- no PDAL involved at all. Fastest, least disk. Never clips.
+ *   - ConvertToLasAsync(keepRawCopc: false): search, fully download each tile locally, convert
+ *     each to its own full-tile .las, discard the raw tile. One file kept per tile, in
+ *     outputFolder.
+ *   - ConvertToLasAsync(keepRawCopc: true): same conversion, but the raw tile is kept in
+ *     "outputFolder\COPC" alongside the .las in "outputFolder\LAS" -- most disk, but no re-download
+ *     needed if the raw tile is wanted later.
+ * The AOI decides which tiles are found/downloaded (via the STAC "intersects" search); optionally
+ * (see "Clip to area of interest" in the dock pane) each tile can also be cropped down to the AOI
+ * (plus an optional buffer -- see PrepareAoi) during conversion, via PDAL. Clipping only applies to
+ * the two convert modes -- DownloadTilesOnlyAsync never runs PDAL, so there's nothing to crop.
+ * Also convert-mode-only: "Compress to zLAS" additionally compresses each tile's .las to Esri's own
+ * .zlas format via ConvertLasService (a 3D Analyst geoprocessing tool -- PDAL can't write zLAS
+ * itself), discarding the uncompressed .las once the .zlas sibling exists.
+ * Every conversion converts each local tile to its own .las in its OWN PDAL process, run
+ * concurrently -- one shared pipeline covering every tile (an earlier approach here) runs as a
+ * single Python/PDAL process, so it can't use more than one core no matter how many tiles there
+ * are; a separate process per tile gets genuine OS-level parallelism instead. Concurrency is capped
+ * at 25% of the core count for this CPU-bound step (see MaxTileConvertConcurrency -- leaves the
+ * rest of the system, Pro's own UI thread included, some headroom) and throttled back further under
+ * memory pressure (see RunWithAdaptiveConcurrencyAsync), since process count -- not point count --
+ * is what drives memory footprint here. The earlier, network-bound tile-fetch step uses a separate,
+ * looser cap (see MaxConcurrentTileFetches: the smaller of logical cores - 2 and 75% of cores).
+ * SearchTileCountAsync is a preview-only STAC search used by the dock pane's "Search Catalog" button.
+ */
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using ArcGIS.Core.Geometry;
+using KylidarAddin.Stac;
+
+namespace KylidarAddin.Services
+{
+    public class ClipResult
+    {
+        public bool Success { get; set; }
+        public IReadOnlyList<string> OutputPaths { get; set; }
+        public string Error { get; set; }
+    }
+
+    /// <summary>Result of PrepareAoi: the GeoJSON used for the STAC search, plus (only when
+    /// clipping is enabled) one WKT polygon string per AOI part, used to crop tiles via PDAL.</summary>
+    public class AoiSearchInfo
+    {
+        public string GeoJson { get; set; }
+        public IReadOnlyList<string> CropWktParts { get; set; }
+        /// <summary>The geometry the tile search used, in the AOI's own spatial reference: the AOI
+        /// itself, or its buffer when clipping with a buffer. A polygon here is what breaklines are
+        /// clipped to (see BreaklineService.PrepareRegion); a point/line has no area to clip by.</summary>
+        public Geometry SearchGeometry { get; set; }
+    }
+
+    /// <summary>
+    /// Aggregate run progress across the whole tile set, for a tqdm-style progress bar in the dock
+    /// pane -- a separate channel from the line-by-line IProgress&lt;string&gt; log, which has no
+    /// structured "how far along overall" signal. Phase is "Downloading" or "Converting";
+    /// Completed/Total are counts within that phase (always out of the full tile count).
+    /// OverallFraction (0-1) spans the whole run: for the convert modes, which fetch every tile
+    /// before converting any of them (see ConvertToLasAsync), downloading and converting are each
+    /// weighted 50% of OverallFraction so the bar fills smoothly start to finish instead of sitting
+    /// at 0% through the entire fetch phase, then jumping.
+    /// </summary>
+    public readonly struct RunProgress
+    {
+        public string Phase { get; init; }
+        public int Completed { get; init; }
+        public int Total { get; init; }
+        public double OverallFraction { get; init; }
+    }
+
+    public static class CopcClipService
+    {
+        /// <summary>
+        /// How many tiles to download at once: whichever is SMALLER of (logical cores - 2) and 75%
+        /// of logical cores -- the -2 keeps a couple of cores free on small machines (where 75% alone
+        /// would allow using all-but-one), while the 75% cap keeps this from creeping up toward
+        /// "every core but 2" on big machines (e.g. 62 of 64) where that stops leaving meaningful
+        /// headroom. This step is network-bound, not CPU-bound (barely touches the CPU) -- a looser
+        /// cap than MaxTileConvertConcurrency's 25%, which governs the actually CPU-bound convert
+        /// step below. A large value here means that many simultaneous full-file HTTP downloads
+        /// against the same host -- worth watching for if that host starts throttling/erroring
+        /// under load.
+        /// </summary>
+        private static int MaxConcurrentTileFetches =>
+            Math.Max(1, Math.Min(Environment.ProcessorCount - 2, (int)(Environment.ProcessorCount * 0.75)));
+
+        /// <summary>
+        /// Geometry-engine step: project the AOI to WGS84 for the STAC "intersects" search, and
+        /// (when clipping is enabled) buffer it first and split the buffered polygon into per-part
+        /// WKT strings for PDAL. Must be called from the MCT thread (inside QueuedTask.Run) --
+        /// unlike ConvertToLasAsync below, which does no ArcGIS.Core.Geometry work and must NOT be
+        /// run on/blocked against the MCT thread, since it awaits network I/O and an external
+        /// process for potentially a long time.
+        ///
+        /// A buffer is optional but not enforced: a point or line AOI has no area to crop by without
+        /// one, so clipping with no buffer produces an empty result rather than being blocked. A
+        /// polygon AOI already has an area, so when clipping is on but no buffer was given, the
+        /// polygon's own boundary is used as-is (bufferFeet is 0 or unparsed).
+        /// </summary>
+        public static AoiSearchInfo PrepareAoi(Geometry aoi, bool clipToAoi, double bufferFeet)
+        {
+            var searchGeometry = aoi;
+            if (clipToAoi && bufferFeet > 0)
+            {
+                // Geodesic, not the planar Buffer: a planar buffer of a point comes back as a polygon
+                // holding a single circular-arc segment (PointCount == 2), which the GeoJSON/WKT
+                // writers flatten to a collapsed ring -- the STAC search then fails with a 400 and
+                // PDAL has nothing to crop by. GeodesicBuffer returns a real vertex ring, and is
+                // also in true ground feet regardless of the map's projection (a planar buffer in
+                // Web Mercator is too big at Kentucky's latitude, and in a geographic map it is
+                // measured in degrees).
+                searchGeometry = GeometryEngine.Instance.GeodesicBuffer(aoi, bufferFeet, LinearUnit.Feet);
+            }
+
+            var searchWgs84 = (Geometry)GeometryEngine.Instance.Project(searchGeometry, SpatialReferences.WGS84);
+            var info = new AoiSearchInfo { GeoJson = GeoJsonConverter.ToGeoJsonGeometry(searchWgs84), SearchGeometry = searchGeometry };
+            if (clipToAoi)
+                info.CropWktParts = GeoJsonConverter.ToWktParts(searchWgs84);
+            return info;
+        }
+
+        /// <summary>Default STAC search item limit, and what the dock pane's "Search limit" field
+        /// starts at -- see <see cref="SearchTilesAsync"/> for how a search that hits it is
+        /// reported back as (possibly) truncated.</summary>
+        public const int DefaultSearchLimit = 200;
+
+        /// <summary>One API source plus which of its collections to search -- the built-in KyFromAbove
+        /// source always searches its known laz-phase1/2/3 collections; another source would
+        /// search whichever collections it is given (see
+        /// KylidarDockpaneViewModel.BuildSourceCollections). Every public search entry point below
+        /// takes a list of these instead of a flat collection-ID list, so a run can combine tiles
+        /// from more than one STAC API in a single search/download/convert pass.</summary>
+        public readonly struct SourceCollections
+        {
+            public StacApiSource Source { get; init; }
+            public IReadOnlyCollection<string> Collections { get; init; }
+        }
+
+        /// <summary>Preview-only STAC search: how many LiDAR tiles intersect this AOI/phase selection,
+        /// without fetching or processing anything. Backs the dock pane's "Search Catalog" button.
+        /// hitLimit is true when any one source's search returned exactly <paramref name="limit"/>
+        /// items -- there may be more coverage than what's reflected in the count.</summary>
+        public static async Task<(int count, bool hitLimit)> SearchTileCountAsync(
+            string geoJson, IReadOnlyList<SourceCollections> sources, int limit = DefaultSearchLimit, CancellationToken ct = default)
+        {
+            var result = await SearchTilesAsync(geoJson, sources, limit, null, ct).ConfigureAwait(false);
+            return (result.Tiles.Count, result.HitLimit);
+        }
+
+        /// <summary>Matching tile hrefs, for the dock pane's "Export Script" feature -- like
+        /// SearchTileCountAsync but hands back what's needed to build a portable download script.
+        /// hitLimit is true when any one source's search returned exactly <paramref name="limit"/> items.</summary>
+        public static async Task<(IReadOnlyList<string> urls, bool hitLimit)> SearchTileUrlsAsync(
+            string geoJson, IReadOnlyList<SourceCollections> sources, int limit = DefaultSearchLimit, CancellationToken ct = default)
+        {
+            var result = await SearchTilesAsync(geoJson, sources, limit, null, ct).ConfigureAwait(false);
+            return (result.Tiles.Select(t => t.asset.Href).ToList(), result.HitLimit);
+        }
+
+        /// <summary>Download each matching tile's raw file (COPC or plain LAZ) as-is into
+        /// outputFolder -- no PDAL involved, no format conversion or clipping.</summary>
+        public static async Task<ClipResult> DownloadTilesOnlyAsync(
+            string geoJson, IReadOnlyList<SourceCollections> sources, string outputFolder,
+            IProgress<string> progress, IProgress<RunProgress> runProgress = null,
+            int searchLimit = DefaultSearchLimit, CancellationToken ct = default)
+        {
+            var searchResult = await SearchTilesAsync(geoJson, sources, searchLimit, progress, ct).ConfigureAwait(false);
+            var tiles = searchResult.Tiles;
+            if (tiles.Count == 0)
+                return new ClipResult { Success = false, Error = "No LiDAR coverage found for this AOI in the selected phase(s). Try a different phase or a new AOI." };
+
+            progress?.Report($"Found {tiles.Count} LiDAR tile(s) intersecting the AOI.");
+            if (searchResult.HitLimit)
+                progress?.Report($"Hit the {searchLimit}-tile search limit -- there may be more coverage than this. Raise the search limit in the pane and run again to get the rest.");
+            Directory.CreateDirectory(outputFolder);
+
+            var outputPaths = new string[tiles.Count];
+            int completed = 0;
+            runProgress?.Report(new RunProgress { Phase = "Downloading", Completed = 0, Total = tiles.Count, OverallFraction = 0 });
+            using (var throttle = new SemaphoreSlim(MaxConcurrentTileFetches))
+            {
+                var downloadTasks = tiles.Select(async (t, i) =>
+                {
+                    await throttle.WaitAsync(ct).ConfigureAwait(false);
+                    try
+                    {
+                        ct.ThrowIfCancellationRequested();
+                        var fileName = Path.GetFileName(new Uri(t.asset.Href).LocalPath);
+                        var localPath = Path.Combine(outputFolder, fileName);
+                        await TileDownloadService.DownloadAsync(t.asset.Href, localPath, progress, ct).ConfigureAwait(false);
+                        outputPaths[i] = localPath;
+                        var done = Interlocked.Increment(ref completed);
+                        runProgress?.Report(new RunProgress { Phase = "Downloading", Completed = done, Total = tiles.Count, OverallFraction = (double)done / tiles.Count });
+                    }
+                    finally
+                    {
+                        throttle.Release();
+                    }
+                });
+                await Task.WhenAll(downloadTasks).ConfigureAwait(false);
+            }
+
+            return new ClipResult { Success = true, OutputPaths = outputPaths.ToList() };
+        }
+
+        /// <summary>Search the STAC catalog and flatten matching items to their LiDAR assets.</summary>
+        /// <summary>Tiles found by a search, plus whether the STAC item count came back at exactly
+        /// <c>limit</c> -- a signal (not a guarantee, since that many items could just be the whole
+        /// match) that more coverage may exist beyond what was returned.</summary>
+        private readonly struct TileSearchResult
+        {
+            public List<(StacItem item, StacAsset asset)> Tiles { get; init; }
+            public bool HitLimit { get; init; }
+        }
+
+        /// <summary>Searches every source independently and merges their tiles -- one unreachable or
+        /// erroring source is reported via progress and otherwise ignored, rather than failing
+        /// the whole search. Fails only if every source errored and none produced a tile.</summary>
+        private static async Task<TileSearchResult> SearchTilesAsync(
+            string geoJson, IReadOnlyList<SourceCollections> sources, int limit, IProgress<string> progress, CancellationToken ct)
+        {
+            progress?.Report(sources.Count > 1
+                ? $"Searching {sources.Count} STAC API(s) for LiDAR coverage..."
+                : "Searching STAC catalog for LiDAR coverage...");
+
+            var tiles = new List<(StacItem item, StacAsset asset)>();
+            bool hitLimit = false;
+            var errors = new List<string>();
+            foreach (var sc in sources)
+            {
+                ct.ThrowIfCancellationRequested();
+                StacItemCollection results;
+                try
+                {
+                    results = await sc.Source.Client.SearchIntersectsAsync(geoJson, sc.Collections, limit: limit, ct: ct).ConfigureAwait(false);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    errors.Add($"{sc.Source.Name}: {ex.Message}");
+                    continue;
+                }
+
+                foreach (var item in results?.Features ?? Enumerable.Empty<StacItem>())
+                    foreach (var asset in item.GetLidarAssets())
+                        tiles.Add((item, asset));
+                if ((results?.Features?.Count ?? 0) >= limit) hitLimit = true;
+            }
+
+            if (errors.Count > 0)
+                progress?.Report((tiles.Count > 0 ? "Some sources failed: " : "All sources failed: ") + string.Join("; ", errors));
+            if (tiles.Count == 0 && errors.Count == sources.Count && sources.Count > 0)
+                throw new InvalidOperationException(string.Join("; ", errors));
+
+            return new TileSearchResult { Tiles = tiles, HitLimit = hitLimit };
+        }
+
+        /// <param name="keepRawCopc">
+        /// True: the raw COPC/LAZ tile(s) are kept, in "<paramref name="outputFolder"/>\COPC", and
+        /// converted .las output goes to "<paramref name="outputFolder"/>\LAS". False: raw tiles are
+        /// fetched into a scratch temp folder and deleted once conversion finishes; .las output goes
+        /// straight into outputFolder.
+        /// </param>
+        /// <param name="cropWktParts">
+        /// Null/empty: every tile is converted in full, no cropping. Non-empty: each tile is cropped
+        /// to these AOI part(s) (already buffered -- see PrepareAoi) during conversion.
+        /// </param>
+        /// <param name="compressToZlas">
+        /// After PDAL produces each tile's .las, additionally compress it to Esri's own zLAS format
+        /// (.zlas) via ConvertLasService -- PDAL itself can't write zLAS, only LASzip/.laz. The
+        /// uncompressed .las is deleted once its .zlas sibling exists, so OutputPaths ends up
+        /// pointing at .zlas files instead of .las ones.
+        /// </param>
+        public static async Task<ClipResult> ConvertToLasAsync(
+            string geoJson, IReadOnlyList<SourceCollections> sources,
+            bool keepRawCopc, string outputFolder, IReadOnlyList<string> cropWktParts, bool compressToZlas, PointFilter pointFilter,
+            IProgress<string> progress, IProgress<RunProgress> runProgress = null,
+            int searchLimit = DefaultSearchLimit, CancellationToken ct = default)
+        {
+            string tempDir = null;
+            try
+            {
+                var searchResult = await SearchTilesAsync(geoJson, sources, searchLimit, progress, ct).ConfigureAwait(false);
+                var tiles = searchResult.Tiles;
+                if (tiles.Count == 0)
+                    return new ClipResult { Success = false, Error = "No LiDAR coverage found for this AOI in the selected phase(s). Try a different phase or a new AOI." };
+
+                progress?.Report($"Found {tiles.Count} LiDAR tile(s) intersecting the AOI.");
+                if (searchResult.HitLimit)
+                    progress?.Report($"Hit the {searchLimit}-tile search limit -- there may be more coverage than this. Raise the search limit in the pane and run again to get the rest.");
+
+                string rawTilesDir;
+                if (keepRawCopc)
+                {
+                    rawTilesDir = Path.Combine(outputFolder, "COPC");
+                    Directory.CreateDirectory(rawTilesDir);
+                }
+                else
+                {
+                    tempDir = Path.Combine(Path.GetTempPath(), $"kylidar_{Guid.NewGuid():N}");
+                    Directory.CreateDirectory(tempDir);
+                    rawTilesDir = tempDir;
+                }
+
+                // Fetch each tile locally, concurrently (bounded by MaxConcurrentTileFetches) rather
+                // than one at a time, since this step is dominated by network I/O; results are
+                // written into a slot per tile so the output list built afterward stays stable
+                // regardless of fetch order.
+                var localTileSlots = new (string path, bool isCopc)?[tiles.Count];
+                int fetchCompleted = 0;
+                runProgress?.Report(new RunProgress { Phase = "Downloading", Completed = 0, Total = tiles.Count, OverallFraction = 0 });
+                using (var throttle = new SemaphoreSlim(MaxConcurrentTileFetches))
+                {
+                    var fetchTasks = tiles.Select(async (t, i) =>
+                    {
+                        var (item, asset) = t;
+                        await throttle.WaitAsync(ct).ConfigureAwait(false);
+                        try
+                        {
+                            ct.ThrowIfCancellationRequested();
+                            var fileName = Path.GetFileName(new Uri(asset.Href).LocalPath);
+                            var localPath = Path.Combine(rawTilesDir, fileName);
+
+                            await TileDownloadService.DownloadAsync(asset.Href, localPath, progress, ct).ConfigureAwait(false);
+                            localTileSlots[i] = (localPath, asset.IsCopc);
+                            var done = Interlocked.Increment(ref fetchCompleted);
+                            // Fetch is the first half of overall progress for this mode -- see
+                            // RunProgress's doc comment for why (both phases run sequentially).
+                            runProgress?.Report(new RunProgress { Phase = "Downloading", Completed = done, Total = tiles.Count, OverallFraction = 0.5 * done / tiles.Count });
+                        }
+                        finally
+                        {
+                            throttle.Release();
+                        }
+                    });
+                    await Task.WhenAll(fetchTasks).ConfigureAwait(false);
+                }
+                var localTiles = localTileSlots.Select(t => t.Value).ToList();
+
+                if (keepRawCopc)
+                    progress?.Report($"Kept {localTiles.Count} raw tile(s) in {rawTilesDir}.");
+
+                // Convert each tile via its own concurrent PDAL process.
+                var lasFolder = keepRawCopc ? Path.Combine(outputFolder, "LAS") : outputFolder;
+                Directory.CreateDirectory(lasFolder);
+
+                bool clipping = cropWktParts != null && cropWktParts.Count > 0;
+                progress?.Report(clipping
+                    ? $"Converting and clipping {localTiles.Count} point cloud tile(s) to the AOI (up to {MaxTileConvertConcurrency} of {Environment.ProcessorCount} cores)..."
+                    : $"Converting {localTiles.Count} point cloud tile(s) (up to {MaxTileConvertConcurrency} of {Environment.ProcessorCount} cores)...");
+
+                if (pointFilter != null && pointFilter.IsActive)
+                    progress?.Report($"Point filter: keeping {pointFilter.Summary()}.");
+
+                var outputPaths = localTiles.Select(t => Path.Combine(lasFolder, TileBaseName(t.path) + ".las")).ToList();
+                runProgress?.Report(new RunProgress { Phase = "Converting", Completed = 0, Total = tiles.Count, OverallFraction = 0.5 });
+                try
+                {
+                    await RunPerTileConversionsAsync(localTiles, outputPaths, cropWktParts, pointFilter, progress, runProgress, tiles.Count, ct).ConfigureAwait(false);
+                }
+                catch (PdalStageFailedException ex)
+                {
+                    return new ClipResult { Success = false, Error = ex.Message };
+                }
+
+                // Tiles the point filter left empty were deleted above.
+                outputPaths = outputPaths.Where(File.Exists).ToList();
+                if (outputPaths.Count == 0)
+                    return new ClipResult { Success = false, Error = "No points matched the point filter in any tile -- loosen the classes/returns and run again." };
+
+                if (compressToZlas)
+                {
+                    progress?.Report($"Compressing {outputPaths.Count} .las file(s) to zLAS...");
+                    var zlasPaths = new List<string>(outputPaths.Count);
+                    foreach (var lasPath in outputPaths)
+                    {
+                        ct.ThrowIfCancellationRequested();
+                        var zlasPath = await ConvertLasService.CompressToZlasAsync(lasPath, progress).ConfigureAwait(false);
+                        if (zlasPath == null)
+                            return new ClipResult { Success = false, Error = $"Couldn't compress {Path.GetFileName(lasPath)} to zLAS." };
+                        zlasPaths.Add(zlasPath);
+                    }
+                    outputPaths = zlasPaths;
+                }
+
+                return new ClipResult { Success = true, OutputPaths = outputPaths };
+            }
+            finally
+            {
+                if (tempDir != null)
+                {
+                    try { Directory.Delete(tempDir, recursive: true); } catch { /* ignore */ }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Individual-output-file base name for a tile: its filename with the LiDAR extension
+        /// stripped, including the compound ".copc.laz" (Path.GetFileNameWithoutExtension only
+        /// strips the last ".laz", which would otherwise leave e.g. "tile_123.copc.las").
+        /// </summary>
+        private static string TileBaseName(string tilePath)
+        {
+            var name = Path.GetFileName(tilePath);
+            foreach (var ext in new[] { ".copc.laz", ".laz", ".las" })
+            {
+                if (name.EndsWith(ext, StringComparison.OrdinalIgnoreCase))
+                    return name.Substring(0, name.Length - ext.Length);
+            }
+            return Path.GetFileNameWithoutExtension(name);
+        }
+
+        /// <summary>Thrown by a per-tile conversion job on PDAL failure; caught around the call into
+        /// RunPerTileConversionsAsync/ConvertOneTileAsync and turned into a failed ClipResult,
+        /// matching how every other PDAL failure in this class is surfaced (not as a thrown
+        /// exception).</summary>
+        private class PdalStageFailedException : Exception
+        {
+            public PdalStageFailedException(string message) : base(message) { }
+        }
+
+        /// <summary>
+        /// Cap per-tile PDAL process concurrency at 25% of logical cores rather than 100%: each
+        /// process is CPU-bound (LAZ decompression, format conversion, and -- when clipping --
+        /// cropping/merging) and each holds a tile in memory, so saturating every core leaves nothing for
+        /// the rest of the system --
+        /// ArcGIS Pro's own UI thread included -- to stay responsive while a big run is going.
+        /// </summary>
+        private static int MaxTileConvertConcurrency => Math.Max(1, (int)(Environment.ProcessorCount * 0.25));
+
+        /// <summary>Run one PDAL process per tile, concurrently (see RunWithAdaptiveConcurrencyAsync
+        /// for the concurrency/memory policy). <paramref name="outputPaths"/> is parallel to
+        /// <paramref name="localTiles"/>. Converting is the second half of overall progress for
+        /// this mode -- see RunProgress's doc comment.</summary>
+        private static Task RunPerTileConversionsAsync(
+            IReadOnlyList<(string path, bool isCopc)> localTiles, IReadOnlyList<string> outputPaths,
+            IReadOnlyList<string> cropWktParts, PointFilter pointFilter, IProgress<string> progress, IProgress<RunProgress> runProgress,
+            int totalTileCount, CancellationToken ct)
+        {
+            int completed = 0;
+            var jobs = localTiles.Select((tile, i) =>
+                (Func<Task>)(async () =>
+                {
+                    await ConvertOneTileAsync(tile, outputPaths[i], cropWktParts, pointFilter, progress, ct).ConfigureAwait(false);
+                    var done = Interlocked.Increment(ref completed);
+                    runProgress?.Report(new RunProgress { Phase = "Converting", Completed = done, Total = totalTileCount, OverallFraction = 0.5 + 0.5 * done / totalTileCount });
+                }));
+            return RunWithAdaptiveConcurrencyAsync(jobs, MaxTileConvertConcurrency, ct);
+        }
+
+        private static readonly System.Text.RegularExpressions.Regex PointsWrittenPattern =
+            new System.Text.RegularExpressions.Regex(@"PDAL: (\d+) points written");
+
+        /// <summary>The point count PdalRunner prints ("PDAL: N points written"), or -1 if it isn't in the log.</summary>
+        private static long PointsWritten(string log)
+        {
+            var m = log == null ? null : PointsWrittenPattern.Match(log);
+            return m != null && m.Success && long.TryParse(m.Groups[1].Value, out var n) ? n : -1;
+        }
+
+        /// <summary>Run a single tile through its own PDAL process: read (COPC or LAS), optionally
+        /// crop to the AOI, filter by class/return, and write to outputPath. Throws
+        /// PdalStageFailedException on failure.</summary>
+        private static async Task ConvertOneTileAsync(
+            (string path, bool isCopc) tile, string outputPath, IReadOnlyList<string> cropWktParts, PointFilter pointFilter,
+            IProgress<string> progress, CancellationToken ct)
+        {
+            var pipelineJson = BuildSingleTileConvertPipelineJson(tile.path, tile.isCopc, outputPath, cropWktParts, pointFilter);
+            var result = await PdalRunner.RunPipelineAsync(pipelineJson, progress, ct).ConfigureAwait(false);
+            if (!result.Success)
+                throw new PdalStageFailedException(result.Error ?? $"PDAL failed converting {Path.GetFileName(tile.path)}.");
+            // A tile with nothing in the chosen classes/returns (e.g. "Water only" over dry land) would
+            // otherwise leave a header-only .las behind, which then shows up as an empty output and
+            // gets compressed and added to the LAS dataset. Drop it instead.
+            if (pointFilter != null && pointFilter.IsActive && PointsWritten(result.Log) == 0)
+            {
+                try { File.Delete(outputPath); } catch { /* ignore */ }
+                progress?.Report($"{Path.GetFileName(tile.path)}: no points match the point filter; skipped.");
+                return;
+            }
+            progress?.Report($"Converted {Path.GetFileName(tile.path)}.");
+        }
+
+        /// <summary>
+        /// Run each job with as much OS-level parallelism as the machine has cores for
+        /// (<paramref name="maxConcurrency"/>), but throttle back -- stop starting new ones, let
+        /// running ones drain -- whenever system memory usage is at/above MaxMemoryLoadFraction.
+        /// Each job here is a separate PDAL process, so process count (not point/data size) is what
+        /// drives memory footprint, making "how many processes are in flight" the right knob. Always
+        /// keeps at least one job running so a persistently-high memory reading can't wedge things
+        /// indefinitely; memory is only re-checked when about to start an additional job, so this
+        /// never busy-polls.
+        /// </summary>
+        private static async Task RunWithAdaptiveConcurrencyAsync(IEnumerable<Func<Task>> jobFactories, int maxConcurrency, CancellationToken ct)
+        {
+            var pending = new Queue<Func<Task>>(jobFactories);
+            var running = new List<Task>();
+            while (pending.Count > 0 || running.Count > 0)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                while (pending.Count > 0 && running.Count < maxConcurrency &&
+                       (running.Count == 0 || CurrentMemoryLoadFraction() < MaxMemoryLoadFraction))
+                {
+                    running.Add(pending.Dequeue()());
+                }
+
+                var finished = await Task.WhenAny(running).ConfigureAwait(false);
+                running.Remove(finished);
+                await finished.ConfigureAwait(false); // rethrow on failure
+            }
+        }
+
+        private const double MaxMemoryLoadFraction = 0.80;
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct MemoryStatusEx
+        {
+            public uint dwLength;
+            public uint dwMemoryLoad;
+            public ulong ullTotalPhys;
+            public ulong ullAvailPhys;
+            public ulong ullTotalPageFile;
+            public ulong ullAvailPageFile;
+            public ulong ullTotalVirtual;
+            public ulong ullAvailVirtual;
+            public ulong ullAvailExtendedVirtual;
+        }
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool GlobalMemoryStatusEx(ref MemoryStatusEx lpBuffer);
+
+        /// <summary>
+        /// Fraction (0-1) of physical memory currently in use, via the OS's own "memory load"
+        /// figure -- simpler and more reliable than a PerformanceCounter (no category/permission
+        /// setup). Returns 0 (never throttles) if the call fails for any reason.
+        /// </summary>
+        private static double CurrentMemoryLoadFraction()
+        {
+            var status = new MemoryStatusEx { dwLength = (uint)Marshal.SizeOf<MemoryStatusEx>() };
+            return GlobalMemoryStatusEx(ref status) ? status.dwMemoryLoad / 100.0 : 0;
+        }
+
+        /// <summary>
+        /// Build a single-tile PDAL pipeline: read the whole tile (COPC or LAS), optionally crop to
+        /// one or more AOI WKT polygon parts, and write to outputPath.
+        ///
+        /// Cropping ALWAYS reads via readers.las (even for a .copc.laz tile) and crops via
+        /// filters.crop, never readers.copc's own "polygon" option. readers.las reads a COPC file's
+        /// points just fine -- COPC is a valid LASzip-compressed LAZ 1.4 stream underneath, the
+        /// octree-hierarchy VLRs readers.copc uses for spatially-indexed partial reads are optional
+        /// extra metadata a plain LAZ reader just ignores, decompressing every point regardless
+        /// (verified empirically: identical point count either way) -- and now that every tile is
+        /// always fully downloaded to local disk before PDAL ever touches it (no more COPC
+        /// network-partial-fetch), there's no efficiency reason left to prefer readers.copc's own
+        /// polygon-based filtering. That matters because readers.copc's "polygon" option can flat-out
+        /// CRASH PDAL (a native segfault, not a clean error) on a complex/high-vertex polygon --
+        /// reproduced with a real ~1500-vertex AOI boundary: the identical WKT crops correctly via
+        /// filters.crop, but segfaults via readers.copc's polygon array every time. filters.crop's
+        /// multi-region semantics differ from a single combined polygon anyway (documented to produce
+        /// one output point-view PER region, not a union), so a multi-part AOI needs one filters.crop
+        /// branch per part off a single reader, recombined via filters.merge before the writer.
+        ///
+        /// cropWktParts are always in WGS84 (see PrepareAoi/GeoJsonConverter.ToWktParts), not the
+        /// tile's own CRS (a Kentucky State Plane variant, in feet). filters.crop otherwise assumes
+        /// the polygon is in the SAME CRS as the point data, so each crop stage passes an explicit
+        /// "a_srs":"EPSG:4326" -- verified empirically that omitting it makes every point silently
+        /// fail the crop, producing an empty .las whose degenerate (0,0) extent then displays
+        /// thousands of miles from Kentucky.
+        /// </summary>
+        private static string BuildSingleTileConvertPipelineJson(
+            string tilePath, bool isCopc, string outputPath, IReadOnlyList<string> cropWktParts, PointFilter pointFilter = null)
+        {
+            bool clip = cropWktParts != null && cropWktParts.Count > 0;
+
+            using var ms = new MemoryStream();
+            using (var w = new Utf8JsonWriter(ms))
+            {
+                w.WriteStartObject();
+                w.WritePropertyName("pipeline");
+                w.WriteStartArray();
+
+                const string readTag = "read";
+                string finalInputTag = readTag;
+
+                if (clip)
+                {
+                    w.WriteStartObject();
+                    w.WriteString("type", "readers.las");
+                    w.WriteString("filename", tilePath);
+                    w.WriteString("tag", readTag);
+                    w.WriteEndObject();
+
+                    var cropTags = new List<string>(cropWktParts.Count);
+                    for (int i = 0; i < cropWktParts.Count; i++)
+                    {
+                        var cropTag = $"crop{i}";
+                        cropTags.Add(cropTag);
+                        w.WriteStartObject();
+                        w.WriteString("type", "filters.crop");
+                        w.WriteString("polygon", cropWktParts[i]);
+                        w.WriteString("a_srs", "EPSG:4326");
+                        w.WritePropertyName("inputs");
+                        w.WriteStartArray();
+                        w.WriteStringValue(readTag);
+                        w.WriteEndArray();
+                        w.WriteString("tag", cropTag);
+                        w.WriteEndObject();
+                    }
+
+                    if (cropTags.Count > 1)
+                    {
+                        const string mergeTag = "merged";
+                        w.WriteStartObject();
+                        w.WriteString("type", "filters.merge");
+                        w.WritePropertyName("inputs");
+                        w.WriteStartArray();
+                        foreach (var t in cropTags) w.WriteStringValue(t);
+                        w.WriteEndArray();
+                        w.WriteString("tag", mergeTag);
+                        w.WriteEndObject();
+                        finalInputTag = mergeTag;
+                    }
+                    else
+                    {
+                        finalInputTag = cropTags[0];
+                    }
+                }
+                else
+                {
+                    w.WriteStartObject();
+                    w.WriteString("type", isCopc ? "readers.copc" : "readers.las");
+                    w.WriteString("filename", tilePath);
+                    w.WriteString("tag", readTag);
+                    w.WriteEndObject();
+                }
+
+                // Point filter (classes / returns -- see PointFilter): range for the classification
+                // runs and first return, expression for the last return.
+                var limits = pointFilter?.PdalLimits();
+                if (!string.IsNullOrEmpty(limits))
+                {
+                    const string rangeTag = "keep";
+                    w.WriteStartObject();
+                    w.WriteString("type", "filters.range");
+                    w.WriteString("limits", limits);
+                    w.WritePropertyName("inputs");
+                    w.WriteStartArray();
+                    w.WriteStringValue(finalInputTag);
+                    w.WriteEndArray();
+                    w.WriteString("tag", rangeTag);
+                    w.WriteEndObject();
+                    finalInputTag = rangeTag;
+                }
+                var expression = pointFilter?.PdalExpression();
+                if (!string.IsNullOrEmpty(expression))
+                {
+                    const string expressionTag = "match";
+                    w.WriteStartObject();
+                    w.WriteString("type", "filters.expression");
+                    w.WriteString("expression", expression);
+                    w.WritePropertyName("inputs");
+                    w.WriteStartArray();
+                    w.WriteStringValue(finalInputTag);
+                    w.WriteEndArray();
+                    w.WriteString("tag", expressionTag);
+                    w.WriteEndObject();
+                    finalInputTag = expressionTag;
+                }
+
+                w.WriteStartObject();
+                w.WriteString("type", "writers.las");
+                w.WriteString("filename", outputPath);
+                w.WritePropertyName("inputs");
+                w.WriteStartArray();
+                w.WriteStringValue(finalInputTag);
+                w.WriteEndArray();
+                w.WriteEndObject();
+
+                w.WriteEndArray();
+                w.WriteEndObject();
+            }
+            return Encoding.UTF8.GetString(ms.ToArray());
+        }
+    }
+}

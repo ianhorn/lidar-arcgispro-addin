@@ -1,0 +1,43 @@
+## .NET / Visual Studio build output
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+aprx*
+
+# Visual Studio cache/options
+.vs/
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Esri add-in packages (binary output produced by the ArcGIS Pro SDK)
+# *.esriAddinX
+*.esriAddin
+
+# MSBuild logs
+*.binlog
+*.log
+
+*.gdb
+
+# MkDocs build output (docs_dir is docs-src/, site_dir is docs/) and local virtualenv. The
+# GitHub Actions workflow (.github/workflows/docs.yml) builds and deploys docs/ to GitHub
+# Pages -- it's never committed.
+docs/
+# Pre-built stand-alone downloader bundled into the add-in (see KylidarAddin.csproj) -- the one
+# build output that IS committed, so a fresh clone can build the add-in without first publishing
+# tools\KylidarDownloader. Everything else under that project's bin/obj stays ignored.
+!tools/KylidarDownloader/bin/
+tools/KylidarDownloader/bin/*
+!tools/KylidarDownloader/bin/publish-win-x64/
+tools/KylidarDownloader/bin/publish-win-x64/*
+!tools/KylidarDownloader/bin/publish-win-x64/KylidarDownloader.exe
