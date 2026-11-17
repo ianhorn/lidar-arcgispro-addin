@@ -87,7 +87,7 @@ what is kept, e.g. **Point filter: Ground; last return** (or **all points** when
   default, and the flag is kept in the `.las` either way, so Pro can still filter on it later.
 
 Classes and returns combine: **Ground only** with **Last (incl. single)** keeps ground points
-that are also the last return of their pulse. Staclidar applies the filter with PDAL after any clip, so the points that survive are the
+that are also the last return of their pulse. StacLidar applies the filter with PDAL after any clip, so the points that survive are the
 ones inside the area of interest *and* matching the filter.
 
 - **Only for converted output.** The filter applies to the two convert modes. **Download COPC
@@ -124,7 +124,7 @@ The buffer (when set) widens *both* the STAC search area and the crop area -- se
 
 !!! warning "Polygons with holes, gaps, or islands"
     A drawn/selected polygon AOI with holes, gaps, or islands can make PDAL's crop step error.
-    Staclidar warns about this under the clip checkbox when it applies, but can't fully paper over
+    StacLidar warns about this under the clip checkbox when it applies, but can't fully paper over
     it -- simplify the AOI if you hit a crop failure.
 
 ## Output folder

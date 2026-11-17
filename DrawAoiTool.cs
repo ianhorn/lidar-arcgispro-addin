@@ -28,7 +28,7 @@ namespace StaclidarAddin
     /// <summary>
     /// Holds the most recently sketched/selected AOI geometry, in its original map spatial
     /// reference, plus a short human-readable description. Raises <see cref="Changed"/> so the
-    /// Staclidar dock pane can update its status line without a MessageBox popup.
+    /// StacLidar dock pane can update its status line without a MessageBox popup.
     /// </summary>
     internal static class AoiState
     {
@@ -93,7 +93,7 @@ namespace StaclidarAddin
                 catch (Exception ex)
                 {
                     MessageBox.Show($"Drew the AOI, but couldn't add it to the {_aoiLabel} Map Notes layer: {ex.Message}",
-                        "Staclidar", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        "StacLidar", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
 
@@ -166,7 +166,7 @@ namespace StaclidarAddin
                 if (selected == null)
                 {
                     MessageBox.Show("No feature found there. Click directly on a feature, or drag a box over one.",
-                        "Staclidar", MessageBoxButton.OK, MessageBoxImage.Information);
+                        "StacLidar", MessageBoxButton.OK, MessageBoxImage.Information);
                     return false;
                 }
 
@@ -202,7 +202,7 @@ namespace StaclidarAddin
                 if (unioned == null)
                 {
                     MessageBox.Show("No feature found there. Click directly on a feature, or drag a box over one.",
-                        "Staclidar", MessageBoxButton.OK, MessageBoxImage.Information);
+                        "StacLidar", MessageBoxButton.OK, MessageBoxImage.Information);
                     return false;
                 }
 
@@ -225,7 +225,7 @@ namespace StaclidarAddin
                 // OnSketchCompleteAsync unhandled, which has previously crashed Pro entirely rather
                 // than just failing this one selection.
                 MessageBox.Show($"Couldn't use the selected feature(s) as an AOI: {ex.Message}",
-                    "Staclidar", MessageBoxButton.OK, MessageBoxImage.Error);
+                    "StacLidar", MessageBoxButton.OK, MessageBoxImage.Error);
                 return false;
             }
             finally

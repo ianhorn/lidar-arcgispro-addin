@@ -124,7 +124,7 @@ namespace StaclidarAddin
             catch (Exception ex)
             {
                 MessageBox.Show($"Couldn't use the current extent as an AOI: {ex.Message}",
-                    "Staclidar", MessageBoxButton.OK, MessageBoxImage.Error);
+                    "StacLidar", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -161,7 +161,7 @@ namespace StaclidarAddin
                 if (geometry == null)
                 {
                     MessageBox.Show("That file has no features to use as an AOI.",
-                        "Staclidar", MessageBoxButton.OK, MessageBoxImage.Information);
+                        "StacLidar", MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
                 }
                 AoiState.Set(geometry, $"AOI from {item.Name}");
@@ -169,7 +169,7 @@ namespace StaclidarAddin
             catch (Exception ex)
             {
                 MessageBox.Show($"Couldn't use \"{item.Name}\" as an AOI: {ex.Message}",
-                    "Staclidar", MessageBoxButton.OK, MessageBoxImage.Error);
+                    "StacLidar", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -194,22 +194,22 @@ namespace StaclidarAddin
                 var r = await UpdateCheckService.CheckAsync();
                 if (!r.IsNewerAvailable)
                 {
-                    MessageBox.Show($"You're up to date: Staclidar {r.Current} is the latest release.",
-                        "Staclidar", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show($"You're up to date: StacLidar {r.Current} is the latest release.",
+                        "StacLidar", MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
                 }
 
                 var open = MessageBox.Show(
                     $"A newer version is available.\n\nInstalled: {r.Current}\nLatest: {r.Latest}\n\nOpen the release page to download it? " +
                     "(Close ArcGIS Pro before installing the new .esriAddinX.)",
-                    "Staclidar", MessageBoxButton.YesNo, MessageBoxImage.Information);
+                    "StacLidar", MessageBoxButton.YesNo, MessageBoxImage.Information);
                 if (open == MessageBoxResult.Yes)
                     Process.Start(new ProcessStartInfo(r.ReleaseUrl) { UseShellExecute = true });
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Couldn't check for a newer version: {ex.Message}\n\nYou can check manually at {UpdateCheckService.ReleasesPage}",
-                    "Staclidar", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    "StacLidar", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
@@ -226,7 +226,7 @@ namespace StaclidarAddin
             catch (Exception ex)
             {
                 MessageBox.Show($"Couldn't open the browser: {ex.Message}\n\nYou can find the docs directly at {FeedbackService.DocsSiteUrl}",
-                    "Staclidar", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    "StacLidar", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
@@ -1203,7 +1203,7 @@ namespace StaclidarAddin
         #endregion
     }
 
-    /// <summary>Ribbon entry point that activates the Staclidar dock pane.</summary>
+    /// <summary>Ribbon entry point that activates the StacLidar dock pane.</summary>
     internal class StaclidarDockpaneShowButton : Button
     {
         protected override void OnClick()

@@ -34,7 +34,7 @@ namespace StaclidarAddin
             catch (Exception ex)
             {
                 MessageBox.Show($"Couldn't open the browser: {ex.Message}\n\nYou can file an issue directly at {FeedbackService.RepoUrl}/issues.",
-                    "Staclidar", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    "StacLidar", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             Close();

@@ -5,11 +5,11 @@
         xsi:schemaLocation="http://schemas.esri.com/DADF/Registry file:///C:/Program%20Files/ArcGIS/Pro/bin/ArcGIS.Desktop.Framework.xsd">
 
   <AddInInfo id="{f2cadbcc-46f7-48b0-8cb4-9b56b3eb038d}" version="1.3.2.0" desktopVersion="3.6.0" product="ArcGISPro">
-    <Name>Staclidar Add-in</Name>
-    <Description>Staclidar Add-in description</Description>
+    <Name>StacLidar Add-in</Name>
+    <Description>StacLidar Add-in description</Description>
     <Image>Images\AddInDesktop32.png</Image>
     <Author>Ian Horn</Author>
-    <Company>Staclidar</Company>
+    <Company>StacLidar</Company>
     <Date>9/7/2026</Date>
     <Subject>Framework</Subject>
     <!-- Note subject can be one or more of these topics:
@@ -19,20 +19,20 @@
   <modules>
     <insertModule id="StaclidarAddin_Module" className="Module1" autoLoad="false" caption="Module1">
       <tabs>
-        <tab id="StaclidarAddin_Tab1" caption="Staclidar" keytip="K0">
+        <tab id="StaclidarAddin_Tab1" caption="StacLidar" keytip="K0">
           <group refID="StaclidarAddin_GroupMain"/>
         </tab>
       </tabs>
 
       <groups>
-        <group id="StaclidarAddin_GroupMain" caption="Staclidar" appearsOnAddInTab="false" keytip="G1">
+        <group id="StaclidarAddin_GroupMain" caption="StacLidar" appearsOnAddInTab="false" keytip="G1">
           <button refID="StaclidarAddin_Dockpane_ShowButton" size="large"/>
         </group>
       </groups>
 
       <controls>
         <!-- These AOI tools are not placed in a group (so they don't appear on the ribbon);
-             they're activated from the Staclidar dock pane via FrameworkApplication.SetCurrentToolAsync,
+             they're activated from the StacLidar dock pane via FrameworkApplication.SetCurrentToolAsync,
              which resolves them by the ID registered here. -->
         <tool id="StaclidarAddin_DrawPointAoiTool" caption="Draw Point AOI" className="DrawPointAoiTool"
               loadOnClick="true" condition="esri_mapping_mapPane"
@@ -54,14 +54,14 @@
               smallImage="Images\SelectFeatureAoi16.png" largeImage="Images\SelectFeatureAoi32.png">
           <tooltip heading="Select Feature AOI">Click (or drag a box over) an existing feature to use its geometry as the LiDAR clip AOI.<disabledText /></tooltip>
         </tool>
-        <button id="StaclidarAddin_Dockpane_ShowButton" caption="Staclidar" className="StaclidarDockpaneShowButton"
+        <button id="StaclidarAddin_Dockpane_ShowButton" caption="StacLidar" className="StaclidarDockpaneShowButton"
                 loadOnClick="true" smallImage="Images\AddInDesktop16.png" largeImage="Images\AddInDesktop32.png">
-          <tooltip heading="Staclidar">Open the Staclidar pane to draw/select an AOI, set clip options, and run the clip.<disabledText /></tooltip>
+          <tooltip heading="StacLidar">Open the StacLidar pane to draw/select an AOI, set clip options, and run the clip.<disabledText /></tooltip>
         </button>
       </controls>
 
       <dockPanes>
-        <dockPane id="StaclidarAddin_Dockpane" caption="Staclidar" className="StaclidarDockpaneViewModel" dock="group" dockWith="esri_core_projectDockPane">
+        <dockPane id="StaclidarAddin_Dockpane" caption="StacLidar" className="StaclidarDockpaneViewModel" dock="group" dockWith="esri_core_projectDockPane">
           <content className="StaclidarDockpaneView" />
         </dockPane>
       </dockPanes>

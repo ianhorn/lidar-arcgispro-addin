@@ -41,7 +41,7 @@
                 <Button Content="Feedback" Command="{Binding FeedbackCommand}" Padding="10,3" Margin="0,0,6,0"
                         ToolTip="Report a bug, request a feature, or send feedback directly."/>
                 <Button Content="Help" Command="{Binding HelpCommand}" Padding="10,3" Margin="0,0,6,0"
-                        ToolTip="Open the Staclidar documentation site."/>
+                        ToolTip="Open the StacLidar documentation site."/>
                 <Button Content="Check version" Command="{Binding CheckVersionCommand}" Padding="10,3"
                         ToolTip="Compare this build with the latest published release."/>
             </StackPanel>

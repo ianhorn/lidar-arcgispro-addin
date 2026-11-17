@@ -192,7 +192,7 @@ cat(sprintf('\nDone: %d succeeded, %d failed -> %s\n', ok, length(results) - ok,
             var lines = new List<string>
             {
                 "#!/usr/bin/env Rscript",
-                "# Staclidar stand-alone download/convert script (base R).",
+                "# StacLidar stand-alone download/convert script (base R).",
                 $"# Generated {DateTime.Now:yyyy-MM-dd HH:mm} -- {tileUrls.Count} tile(s).",
                 "#",
                 "# Edit dest_folder below if needed, then run: Rscript \"<this file>\"  (or source() it in R / RStudio)",
@@ -299,7 +299,7 @@ cat(sprintf('\nDone: %d succeeded, %d failed -> %s\n', ok, length(results) - ok,
             {
                 "#!/usr/bin/env python3",
                 "\"\"\"",
-                "Staclidar stand-alone download/convert script.",
+                "StacLidar stand-alone download/convert script.",
                 $"Generated {DateTime.Now:yyyy-MM-dd HH:mm} -- {tileUrls.Count} tile(s).",
                 "",
                 "Edit DEST_FOLDER below if needed, then run:",
@@ -406,7 +406,7 @@ cat(sprintf('\nDone: %d succeeded, %d failed -> %s\n', ok, length(results) - ok,
         {
             var introSource = new List<string>
             {
-                "# Staclidar stand-alone download/convert notebook",
+                "# StacLidar stand-alone download/convert notebook",
                 "",
                 $"Generated {DateTime.Now:yyyy-MM-dd HH:mm} -- {tileUrls.Count} tile(s).",
                 "",
@@ -550,7 +550,7 @@ cat(sprintf('\nDone: %d succeeded, %d failed -> %s\n', ok, length(results) - ok,
             var lines = new List<string>
             {
                 "<#",
-                "    Staclidar stand-alone download/convert script",
+                "    StacLidar stand-alone download/convert script",
                 $"    Generated {DateTime.Now:yyyy-MM-dd HH:mm} -- {tileUrls.Count} tile(s).",
                 "",
                 "    Edit $DestFolder below if needed, then run:",
@@ -704,7 +704,7 @@ cat(sprintf('\nDone: %d succeeded, %d failed -> %s\n', ok, length(results) - ok,
             var lines = new List<string>
             {
                 "#!/usr/bin/env bash",
-                "# Staclidar stand-alone download/convert script",
+                "# StacLidar stand-alone download/convert script",
                 $"# Generated {DateTime.Now:yyyy-MM-dd HH:mm} -- {tileUrls.Count} tile(s).",
                 "# Edit DEST_FOLDER below if needed, then run: bash \"<this file>\"",
                 "# CONVERT needs the \"pdal\" CLI on PATH. LAS dataset creation (an ArcGIS Pro",

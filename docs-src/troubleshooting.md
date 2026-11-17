@@ -1,13 +1,13 @@
 # Troubleshooting
 
-## The Staclidar tab/pane doesn't show up
+## The StacLidar tab/pane doesn't show up
 
 - If ArcGIS Pro was already open before you rebuilt, close it and reopen (or press **Start
   Debugging** in Visual Studio) -- a running Pro instance keeps the previously loaded add-in in
   memory and won't pick up a rebuild on its own.
 - Check **Add-In Manager** (Project tab, or Options → Add-In Manager) for a load error against
   StaclidarAddin.
-- The pane doesn't auto-open; click the **Staclidar** button on the **Staclidar** ribbon tab.
+- The pane doesn't auto-open; click the **StacLidar** button on the **StacLidar** ribbon tab.
 
 ## "No LiDAR coverage found for this AOI in the selected collection(s)"
 
@@ -40,7 +40,7 @@ fixed as of the current version; if you still see it, make sure you're on an up-
 ## PDAL crop errors on a polygon AOI
 
 If Run fails during conversion with a PDAL error and you have **Clip to area of interest** enabled,
-check whether the AOI polygon has holes, gaps, or islands (disjoint pieces) -- Staclidar warns about
+check whether the AOI polygon has holes, gaps, or islands (disjoint pieces) -- StacLidar warns about
 this under the clip checkbox, but PDAL's crop filter/reader options can still fail on genuinely
 complex multi-part polygons. Simplify the AOI (a single simple polygon, or a bigger buffer around a
 point/line instead) and try again.

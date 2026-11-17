@@ -45,7 +45,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="Have a bug, an idea, or a question about Staclidar?" FontWeight="SemiBold"
+        <TextBlock Grid.Row="0" Text="Have a bug, an idea, or a question about StacLidar?" FontWeight="SemiBold"
                    Foreground="Black" TextWrapping="Wrap" Margin="0,0,0,10"/>
 
         <StackPanel Grid.Row="1" x:Name="ChoicePanel">

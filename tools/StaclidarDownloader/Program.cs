@@ -1,4 +1,4 @@
-// StaclidarDownloader: stand-alone console downloader/converter generated/bundled by the Staclidar
+// StaclidarDownloader: stand-alone console downloader/converter generated/bundled by the StacLidar
 // ArcGIS Pro add-in's "Export Script" -> Executable option.
 //
 // Reads its manifest (tile URLs, destination folder, output mode, crop WKT) and, for each tile:
@@ -102,7 +102,7 @@ internal static class Program
         var concurrency = Math.Max(1, (int)(Environment.ProcessorCount * 0.5));
 
         Directory.CreateDirectory(manifest.DestFolder);
-        Console.WriteLine($"Staclidar downloader -- {manifest.Tiles.Count} tile(s) -> {manifest.DestFolder}");
+        Console.WriteLine($"StacLidar downloader -- {manifest.Tiles.Count} tile(s) -> {manifest.DestFolder}");
         Console.WriteLine($"Convert: {manifest.Convert}, discard raw: {manifest.DiscardRaw}, cropping: {manifest.CropWktParts.Count > 0}");
         Console.WriteLine($"Concurrency: {concurrency}");
         Console.WriteLine();

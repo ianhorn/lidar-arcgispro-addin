@@ -1,4 +1,4 @@
-# Staclidar Add-in
+# StacLidar Add-in
 
 [![Downloads](https://img.shields.io/github/downloads/ianhorn/lidar-arcgispro-addin/total.svg)](https://github.com/ianhorn/lidar-arcgispro-addin/releases)
 

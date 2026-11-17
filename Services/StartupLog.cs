@@ -3,7 +3,7 @@ using System.IO;
 
 namespace StaclidarAddin
 {
-    /// <summary>Pro greys out the Staclidar button without a word when the pane fails to build, so a failure
+    /// <summary>Pro greys out the StacLidar button without a word when the pane fails to build, so a failure
     /// there is written to %LOCALAPPDATA%\Staclidar\startup-error.log and shown in a message box.</summary>
     internal static class StartupLog
     {
@@ -21,9 +21,9 @@ namespace StaclidarAddin
             try
             {
                 ArcGIS.Desktop.Framework.Dialogs.MessageBox.Show(
-                    $"Staclidar failed while {what}:{Environment.NewLine}{Environment.NewLine}{ex.GetType().Name}: {ex.Message}"
+                    $"StacLidar failed while {what}:{Environment.NewLine}{Environment.NewLine}{ex.GetType().Name}: {ex.Message}"
                     + (path != null ? $"{Environment.NewLine}{Environment.NewLine}Details: {path}" : ""),
-                    "Staclidar");
+                    "StacLidar");
             }
             catch { }
         }

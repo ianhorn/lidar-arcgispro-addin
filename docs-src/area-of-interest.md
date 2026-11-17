@@ -9,7 +9,7 @@ selected feature(s)").
 Click one of the three **Draw** buttons to activate an ArcGIS Pro sketch tool on the active map --
 draw your shape and it becomes the AOI. Requires an open map view.
 
-![A polygon AOI drawn on a hillshade map, filled cyan and labeled Polygon AOI, with the Staclidar pane docked alongside reading AOI ready: Polygon AOI](images/aoi-on-map.jpg){ width="800" loading=lazy }
+![A polygon AOI drawn on a hillshade map, filled cyan and labeled Polygon AOI, with the StacLidar pane docked alongside reading AOI ready: Polygon AOI](images/aoi-on-map.jpg){ width="800" loading=lazy }
 
 Once the shape is finished, the pane's status line confirms it ("AOI ready: Polygon AOI" above), and
 the shape stays on the map -- the cyan, labeled polygon is its [Map Notes](#map-notes) record.

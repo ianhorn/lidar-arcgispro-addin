@@ -55,7 +55,7 @@ namespace StaclidarAddin.Services
             var payload = new
             {
                 message = fullMessage,
-                _subject = "Staclidar Add-in feedback",
+                _subject = "StacLidar Add-in feedback",
                 _replyto = string.IsNullOrWhiteSpace(replyToEmail) ? null : replyToEmail.Trim(),
                 _gotcha = "" // honeypot: a real browser form leaves this hidden field empty; bots often fill every field
             };
@@ -95,12 +95,12 @@ namespace StaclidarAddin.Services
             return jsonBody;
         }
 
-        /// <summary>"Staclidar 1.0.0.0 | ArcGIS Pro 3.6.5.59530 | Microsoft Windows 10.0.26100" -- each
+        /// <summary>"StacLidar 1.0.0.0 | ArcGIS Pro 3.6.5.59530 | Microsoft Windows 10.0.26100" -- each
         /// part best-effort; a part that can't be determined is just left out rather than failing
         /// the whole summary.</summary>
         public static string GetEnvironmentSummary()
         {
-            var parts = new System.Collections.Generic.List<string> { "Staclidar " + AddInVersion() };
+            var parts = new System.Collections.Generic.List<string> { "StacLidar " + AddInVersion() };
             var proVersion = ArcGisProVersion();
             if (proVersion != null) parts.Add("ArcGIS Pro " + proVersion);
             parts.Add(RuntimeInformation.OSDescription.Trim());

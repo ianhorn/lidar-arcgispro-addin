@@ -1,5 +1,5 @@
 /*
- * One STAC API endpoint the dock pane can search. Staclidar uses only the built-in KyFromAbove
+ * One STAC API endpoint the dock pane can search. StacLidar uses only the built-in KyFromAbove
  * catalog, but the search code takes a list of sources.
  *
  * Ported from stac-arcgispro-addin (same class, same name) -- see that add-in's StacApiSource.cs.

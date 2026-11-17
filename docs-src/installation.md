@@ -102,7 +102,7 @@ assembly's version ships in the built add-in):
 
 ## Verifying the install
 
-Open ArcGIS Pro and look for the **Staclidar** ribbon tab with a **Staclidar** button. Clicking it
-should open the dockable Staclidar pane (see [Getting Started](getting-started.md)). If the tab is
+Open ArcGIS Pro and look for the **StacLidar** ribbon tab with a **StacLidar** button. Clicking it
+should open the dockable StacLidar pane (see [Getting Started](getting-started.md)). If the tab is
 missing, confirm the build succeeded with no errors and that ArcGIS Pro was restarted after the
 first build.
