@@ -2,7 +2,7 @@
  * One STAC API endpoint the dock pane can search. Staclidar uses only the built-in KyFromAbove
  * catalog, but the search code takes a list of sources.
  *
- * Ported from kyfromabove-ext (same class, same name) -- see that add-in's StacApiSource.cs.
+ * Ported from stac-arcgispro-addin (same class, same name) -- see that add-in's StacApiSource.cs.
  * Each source owns its own StacClient; that's safe since StacClient's HttpClient/
  * JsonSerializerOptions are static/shared, so many StacClient instances pointed at different
  * BaseUri values cost nothing extra in sockets/connections.

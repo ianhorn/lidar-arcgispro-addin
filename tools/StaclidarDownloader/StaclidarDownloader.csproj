@@ -6,7 +6,7 @@
     Reads its manifest (see TryReadEmbeddedManifest) and downloads, then optionally converts/crops
     via the "pdal" CLI, every listed tile: no ArcGIS Pro, and (published self-contained/single-file,
     as the add-in bundles it) no .NET runtime install, required on the machine that runs it. Modeled
-    directly on kyfromabove-ext's own tools\KyFromAboveDownloader\ (same add-in family, same
+    directly on stac-arcgispro-addin's own tools\KyFromAboveDownloader\ (same add-in family, same
     embedded-manifest trick), extended with the convert/crop step that add-in has no need for.
   -->
   <PropertyGroup>

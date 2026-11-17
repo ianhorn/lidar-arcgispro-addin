@@ -1,5 +1,5 @@
 /*
- * Dock pane view model: hosts the AOI tool launchers, LiDAR phase selection, a catalog-search
+ * Dock pane view model: hosts the AOI tool launchers, catalog and collection selection, a catalog-search
  * preview, output mode (download raw COPC files only / convert to .las keeping the raw COPCs /
  * convert discarding them -- always as individual per-tile files, no merge option -- optionally
  * cropped to the drawn/selected AOI, see below), LAS dataset disposition (none/create/add-to-
@@ -8,10 +8,8 @@
  * The output/dataset choices are all made up front, before Run, rather than prompted for afterward
  * -- RunAsync executes the whole chosen pipeline in one pass.
  *
- * "Add hydro-enforced breaklines" (only meaningful with a LAS dataset) downloads the Phase 2/3
- * breaklines inside the search polygon, clips them to it, and adds them to the dataset as a
- * Hard_Line surface constraint -- see BreaklineService. It's best-effort: if the download or write
- * fails, the run continues and the dataset is built without the constraint.
+ * "Add breaklines" (only meaningful with a LAS dataset) adds a line feature class the user picks (it
+ * needs Z values) to the dataset as a Hard_Line surface constraint -- see BreaklineService.
  *
  * "Clip to area of interest" crops each tile to the AOI (plus an optional buffer -- see
  * CopcClipService.PrepareAoi) during conversion; it only affects the two convert output modes,
@@ -31,6 +29,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using ArcGIS.Core.Geometry;
+using ArcGIS.Desktop.Catalog;
 using ArcGIS.Desktop.Framework;
 using ArcGIS.Desktop.Framework.Contracts;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
@@ -215,7 +214,7 @@ namespace StaclidarAddin
         }
 
         /// <summary>Opens the docs site in the user's default browser -- same pattern as
-        /// kyfromabove-stac-addin's Help button.</summary>
+        /// stac-arcgispro-addin's Help button.</summary>
         public ICommand HelpCommand => new RelayCommand(OpenHelp);
 
         private static void OpenHelp()
@@ -235,36 +234,78 @@ namespace StaclidarAddin
 
         #region STAC API source
 
-        /// <summary>Staclidar searches only the KyFromAbove catalog (a fresh StacClient, cheap since
-        /// its HttpClient/JsonSerializerOptions are static underneath). The service layer still takes
-        /// a list of (source, collections) pairs.</summary>
-        private readonly StacApiSource _kyFromAbove = new StacApiSource("KyFromAbove", new StacClient(), isDefault: true);
+        /// <summary>The catalog the user picked. Null until they pick one: there is no default.</summary>
+        private StacApiSource _activeSource;
 
-        /// <summary>The (source, checked collections) list a search/run/export covers.</summary>
+        /// <summary>The picked catalog's point-cloud collections (or all of its collections when none declares
+        /// point-cloud data), each with a checkbox.</summary>
+        public ObservableCollection<CollectionCheckViewModel> Collections { get; } = new ObservableCollection<CollectionCheckViewModel>();
+
+        public bool HasCollections => Collections.Count > 0;
+
+        private string _catalogName = "No catalog selected";
+        public string CatalogName { get => _catalogName; set => SetProperty(ref _catalogName, value); }
+
+        private string _collectionsStatusText;
+        public string CollectionsStatusText { get => _collectionsStatusText; set => SetProperty(ref _collectionsStatusText, value); }
+
+        public ICommand ChooseCatalogCommand => new RelayCommand(async () => await ChooseCatalogAsync(), () => !IsRunning && !IsSearching);
+
+        /// <summary>Let the user pick a catalog (STAC Index or a URL), then list its collections.</summary>
+        private async Task ChooseCatalogAsync()
+        {
+            var dlg = new AddApiSourceDialog { Owner = Application.Current?.MainWindow };
+            if (dlg.ShowDialog() != true || dlg.Result == AddApiSourceResult.Cancel) return;
+
+            var name = string.IsNullOrWhiteSpace(dlg.SourceName) ? dlg.BaseUrl : dlg.SourceName;
+            _activeSource = new StacApiSource(name, dlg.BaseUrl, isDefault: true);
+            CatalogName = name;
+            CatalogSearchStatusText = null;
+            await LoadCollectionsAsync();
+        }
+
+        private async Task LoadCollectionsAsync()
+        {
+            Collections.Clear();
+            NotifyPropertyChanged(nameof(HasCollections));
+            var source = _activeSource;
+            if (source == null) return;
+
+            CollectionsStatusText = "Loading collections...";
+            try
+            {
+                var all = await source.Client.GetCollectionsAsync();
+                var pointCloud = all.Where(c => c.LooksLikePointCloud).ToList();
+                var shown = pointCloud.Count > 0 ? pointCloud : all;
+                foreach (var c in shown.OrderBy(c => c.TitleOrId, StringComparer.CurrentCultureIgnoreCase))
+                    Collections.Add(new CollectionCheckViewModel(c, source));
+                CollectionsStatusText = all.Count == 0
+                    ? "This catalog has no collections."
+                    : pointCloud.Count > 0
+                        ? $"{shown.Count} point-cloud collection(s). Tick the ones to search."
+                        : "No collection declares point-cloud data, so all collections are listed. Tick the ones to search.";
+            }
+            catch (Exception ex)
+            {
+                CollectionsStatusText = "Couldn't load collections: " + ex.Message;
+            }
+            NotifyPropertyChanged(nameof(HasCollections));
+        }
+
+        /// <summary>The (source, ticked collections) list a search/run/export covers. Empty until a catalog is
+        /// chosen and at least one collection ticked.</summary>
         private List<CopcClipService.SourceCollections> BuildSourceCollections()
         {
-            var ids = new List<string>();
-            if (Phase1) ids.Add("laz-phase1");
-            if (Phase2) ids.Add("laz-phase2");
-            if (Phase3) ids.Add("laz-phase3");
             var result = new List<CopcClipService.SourceCollections>();
-            if (ids.Count > 0)
-                result.Add(new CopcClipService.SourceCollections { Source = _kyFromAbove, Collections = ids });
+            var ids = Collections.Where(c => c.IsChecked).Select(c => c.Id).ToList();
+            if (_activeSource != null && ids.Count > 0)
+                result.Add(new CopcClipService.SourceCollections { Source = _activeSource, Collections = ids });
             return result;
         }
 
         #endregion
 
-        #region LiDAR phase selection
-
-        private bool _phase1;
-        public bool Phase1 { get => _phase1; set => SetProperty(ref _phase1, value); }
-
-        private bool _phase2;
-        public bool Phase2 { get => _phase2; set => SetProperty(ref _phase2, value); }
-
-        private bool _phase3;
-        public bool Phase3 { get => _phase3; set => SetProperty(ref _phase3, value); }
+        #region Catalog search
 
         #endregion
 
@@ -337,7 +378,7 @@ namespace StaclidarAddin
             var sources = BuildSourceCollections();
             if (sources.Count == 0)
             {
-                CatalogSearchStatusText = "Select at least one LiDAR phase or collection.";
+                CatalogSearchStatusText = "Choose a catalog and tick at least one collection.";
                 return;
             }
 
@@ -354,7 +395,7 @@ namespace StaclidarAddin
                 FoundTileCount = count;
                 SearchHitLimit = hitLimit;
                 CatalogSearchStatusText = count == 0
-                    ? "No LiDAR coverage found for this AOI in the selected phase(s)."
+                    ? "No LiDAR coverage found for this AOI in the selected collection(s)."
                     : hitLimit
                         ? $"Found {count} LiDAR tile(s) -- hit the {searchLimit}-tile search limit, there may be more. Raise the limit below and search again."
                         : $"Found {count} LiDAR tile(s) intersecting the AOI.";
@@ -660,9 +701,26 @@ namespace StaclidarAddin
         }
 
         private bool _addBreaklines;
-        /// <summary>Whether to add the hydro-enforced breaklines as a surface constraint. Only takes
+        /// <summary>Whether to add the chosen breaklines as a surface constraint. Only takes
         /// effect with a LAS dataset (see CanAddBreaklines) -- the constraint lives in the dataset.</summary>
         public bool AddBreaklines { get => _addBreaklines; set => SetProperty(ref _addBreaklines, value); }
+
+        private string _breaklinePath = string.Empty;
+        /// <summary>The line feature class (with Z values) to use as the Hard_Line surface constraint.</summary>
+        public string BreaklinePath { get => _breaklinePath; set => SetProperty(ref _breaklinePath, value); }
+
+        public ICommand BrowseBreaklinesCommand => new RelayCommand(BrowseBreaklines);
+
+        private void BrowseBreaklines()
+        {
+            var dlg = new OpenItemDialog
+            {
+                Title = "Choose a line feature class with Z values",
+                MultiSelect = false,
+                Filter = ItemFilters.FeatureClasses_All
+            };
+            if (dlg.ShowDialog() == true && dlg.Items.Count > 0) BreaklinePath = dlg.Items[0].Path;
+        }
 
         public bool CanAddBreaklines => SelectedDatasetAction != DatasetAction.None;
 
@@ -859,7 +917,7 @@ namespace StaclidarAddin
             var sources = BuildSourceCollections();
             if (sources.Count == 0)
             {
-                ExportScriptStatusText = "Select at least one LiDAR phase or collection.";
+                ExportScriptStatusText = "Choose a catalog and tick at least one collection.";
                 return;
             }
 
@@ -897,7 +955,7 @@ namespace StaclidarAddin
                 var (tileUrls, hitLimit) = await CopcClipService.SearchTileUrlsAsync(aoiInfo.GeoJson, sources, searchLimit);
                 if (tileUrls.Count == 0)
                 {
-                    ExportScriptStatusText = "No LiDAR coverage found for this AOI in the selected phase(s).";
+                    ExportScriptStatusText = "No LiDAR coverage found for this AOI in the selected collection(s).";
                     return;
                 }
 
@@ -1000,7 +1058,7 @@ namespace StaclidarAddin
             var sources = BuildSourceCollections();
             if (sources.Count == 0)
             {
-                ValidationText = "Select at least one LiDAR phase or collection.";
+                ValidationText = "Choose a catalog and tick at least one collection.";
                 return;
             }
 
@@ -1036,21 +1094,11 @@ namespace StaclidarAddin
 
             // Checked-but-disabled (dataset action None) is treated as off, not as an error.
             var wantBreaklines = AddBreaklines && CanAddBreaklines;
-            if (wantBreaklines)
+            if (wantBreaklines && string.IsNullOrWhiteSpace(BreaklinePath))
             {
-                // Checked here, before any download starts, so a bad combination fails fast.
-                if (!Phase2 && !Phase3)
-                {
-                    ValidationText = "Hydro-enforced breaklines exist for Phase 2 and Phase 3 only -- select one of them, or turn breaklines off.";
-                    return;
-                }
-                if (AoiState.Current is not Polygon && !(ClipToAoi && TryGetBufferFeet(out _)))
-                {
-                    ValidationText = "Breaklines are clipped to the AOI, so they need a polygon AOI, or \"Clip to area of interest\" with a buffer.";
-                    return;
-                }
+                ValidationText = "Choose the breaklines feature class (it needs Z values), or turn breaklines off.";
+                return;
             }
-
             LogLines.Clear();
             IsRunning = true;
             _cts = new CancellationTokenSource();
@@ -1060,20 +1108,13 @@ namespace StaclidarAddin
             _runStopwatch = Stopwatch.StartNew();
 
             ClipResult result = null;
-            string surfaceConstraint = null;
-            string breaklineFeatureClass = null;
+            string surfaceConstraint = wantBreaklines ? BreaklineService.ToConstraintArgument(BreaklinePath) : null;
             try
             {
                 var aoi = AoiState.Current;
                 var bufferFeet = TryGetBufferFeet(out var bf) ? bf : 0;
                 var clipToAoi = ClipToAoi;
-                BreaklineRegion breaklineRegion = null;
-                var aoiInfo = await QueuedTask.Run(() =>
-                {
-                    var info = CopcClipService.PrepareAoi(aoi, clipToAoi, bufferFeet);
-                    if (wantBreaklines) breaklineRegion = BreaklineService.PrepareRegion(info.SearchGeometry);
-                    return info;
-                });
+                var aoiInfo = await QueuedTask.Run(() => CopcClipService.PrepareAoi(aoi, clipToAoi, bufferFeet));
                 var searchLimit = GetSearchLimit();
                 if (SelectedOutputMode == OutputMode.DownloadCopcOnly)
                 {
@@ -1085,18 +1126,6 @@ namespace StaclidarAddin
                     result = await CopcClipService.ConvertToLasAsync(aoiInfo.GeoJson, sources, keepRawCopc, OutputFolder, aoiInfo.CropWktParts, CompressToZlas, pointFilter, progress, runProgress, searchLimit, _cts.Token);
                 }
 
-                // After the point data so a breakline problem can't cost the tiles; still inside
-                // the try so Cancel works and IsRunning stays true until it's done.
-                if (result.Success && breaklineRegion != null)
-                {
-                    var phases = new List<int>();
-                    if (Phase1) phases.Add(1);
-                    if (Phase2) phases.Add(2);
-                    if (Phase3) phases.Add(3);
-                    breaklineFeatureClass = await BuildBreaklineFeatureClassAsync(breaklineRegion, phases, OutputFolder, progress, _cts.Token);
-                    if (breaklineFeatureClass != null)
-                        surfaceConstraint = BreaklineService.ToConstraintArgument(breaklineFeatureClass);
-                }
             }
             catch (OperationCanceledException)
             {
@@ -1132,56 +1161,7 @@ namespace StaclidarAddin
 
             await AddToLasDatasetAsync(result.OutputPaths, progress, surfaceConstraint);
 
-            // After the dataset so the lines draw on top of the point cloud. Added even if the dataset
-            // step failed: the feature class exists on disk either way and is worth seeing.
-            if (breaklineFeatureClass != null)
-            {
-                LogLines.Add(await LasDatasetService.AddFeatureClassToMapAsync(breaklineFeatureClass, "Hydro-enforced breaklines")
-                    ? "Added the hydro-enforced breaklines to the map."
-                    : "Couldn't add the breaklines to the map (open a map view, or add the Breaklines feature class from the output folder manually).");
-            }
-
             LogLines.Add($"Total time: {FormatDuration(_runStopwatch.Elapsed)}");
-        }
-
-        /// <summary>
-        /// Download + clip + write the breaklines, returning the path of the feature class written
-        /// (it feeds both the LAS dataset's surface constraint and the map layer), or null (after
-        /// logging why) when there's nothing to add. Best-effort: anything but cancellation is logged
-        /// and swallowed so the point data still gets its dataset.
-        /// </summary>
-        private async Task<string> BuildBreaklineFeatureClassAsync(
-            BreaklineRegion region, IReadOnlyCollection<int> phases, string outputFolder, IProgress<string> progress, CancellationToken ct)
-        {
-            try
-            {
-                progress.Report("Downloading hydro-enforced breaklines...");
-                var fetched = await BreaklineService.FetchAsync(region, phases, progress, ct);
-                foreach (var note in fetched.Notes) progress.Report(note);
-                if (fetched.Lines.Count == 0)
-                {
-                    progress.Report("No usable breaklines in the AOI -- the LAS dataset will be built without a surface constraint.");
-                    return null;
-                }
-
-                var written = await QueuedTask.Run(() => BreaklineService.WriteFeatureClass(region, fetched.Lines, outputFolder));
-                if (written.FeatureCount == 0)
-                {
-                    progress.Report("Breaklines were found but none fall inside the clip area -- no surface constraint added.");
-                    return null;
-                }
-                progress.Report($"Wrote {written.FeatureCount} clipped breakline(s) to {written.FeatureClassPath}.");
-                return written.FeatureClassPath;
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                progress.Report("Breaklines skipped -- " + ex.Message);
-                return null;
-            }
         }
 
         private static string FormatDuration(TimeSpan elapsed) =>

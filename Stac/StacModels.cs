@@ -1,6 +1,6 @@
 /*
  * STAC API data models, trimmed to what lidar-arcgispro-addin needs (AOI "intersects" search + COPC
- * asset discovery). Duplicated from the fuller set in the kyfromabove-ext add-in on purpose --
+ * asset discovery). Duplicated from the fuller set in the stac-arcgispro-addin add-in on purpose --
  * these are two independent add-ins (see README) -- rather than shared as a library.
  * Conforms to STAC API 1.0.0 / stac-fastapi responses.
  */
@@ -72,5 +72,35 @@ namespace StaclidarAddin.Stac
         [JsonPropertyName("links")] public List<StacLink> Links { get; set; } = new List<StacLink>();
         [JsonPropertyName("numberMatched")] public int? NumberMatched { get; set; }
         [JsonPropertyName("numberReturned")] public int? NumberReturned { get; set; }
+    }
+
+    /// <summary>A STAC Collection summary: just enough to list it and to tell whether it holds point clouds.</summary>
+    public class StacCollection
+    {
+        [JsonPropertyName("id")] public string Id { get; set; }
+        [JsonPropertyName("title")] public string Title { get; set; }
+        [JsonPropertyName("description")] public string Description { get; set; }
+        [JsonPropertyName("keywords")] public List<string> Keywords { get; set; }
+        [JsonPropertyName("stac_extensions")] public List<string> StacExtensions { get; set; }
+        [JsonPropertyName("item_assets")] public Dictionary<string, JsonElement> ItemAssets { get; set; }
+
+        public string TitleOrId => string.IsNullOrWhiteSpace(Title) ? Id : Title;
+
+        private static readonly string[] PointCloudKeywords = { "point cloud", "pointcloud", "point-cloud", "copc" };
+        private static readonly string[] PointCloudAssetKeys = { "pointcloud", "copc", "laz" };
+
+        /// <summary>Whether the collection declares point-cloud data: the STAC pointcloud extension, a
+        /// "point cloud"/"copc" keyword, or a point-cloud-looking item asset. A bare "lidar" keyword is not
+        /// enough -- LiDAR-derived DEMs carry it too.</summary>
+        public bool LooksLikePointCloud =>
+            (StacExtensions?.Any(e => e != null && e.IndexOf("pointcloud", StringComparison.OrdinalIgnoreCase) >= 0) ?? false)
+            || (Keywords?.Any(k => k != null && PointCloudKeywords.Contains(k.Trim().ToLowerInvariant())) ?? false)
+            || (ItemAssets?.Keys.Any(k => PointCloudAssetKeys.Contains(k.ToLowerInvariant())) ?? false);
+    }
+
+    /// <summary>Wrapper for the /collections response.</summary>
+    public class StacCollectionsResponse
+    {
+        [JsonPropertyName("collections")] public List<StacCollection> Collections { get; set; } = new List<StacCollection>();
     }
 }

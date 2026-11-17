@@ -11,7 +11,7 @@
       Standalone Window (unlike StaclidarDockpaneView, a UserControl docked inside Pro's own window),
       so it sits outside Pro's resource dictionaries and needs explicit colors: Pro's implicit
       dark-theme ControlTemplates otherwise leave parts of it dark-on-dark. Modeled directly on
-      kyfromabove-ext's ExportScriptDialog (same add-in family, same "stand-alone download kit"
+      stac-arcgispro-addin's ExportScriptDialog (same add-in family, same "stand-alone download kit"
       idea), including this same color-handling approach.
     -->
     <Window.Resources>

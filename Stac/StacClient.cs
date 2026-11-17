@@ -1,9 +1,8 @@
 /*
- * STAC API HTTP client, trimmed to what lidar-arcgispro-addin needs: a single "intersects" search,
- * optionally scoped to specific collections (e.g. one LiDAR phase). Default base points at the
- * Kentucky From Above catalog, but the API/collections this add-in targets may change later --
- * BaseUri is a mutable property, and LiDAR tiles within a matched item are still identified by
- * asset convention (StacAsset.IsLidar/IsCopc), not by hardcoding an asset key.
+ * STAC API HTTP client, trimmed to what lidar-arcgispro-addin needs: listing a catalog's collections
+ * and a single "intersects" search, optionally scoped to specific collections. There is no default
+ * catalog: BaseUri is set from the catalog the user picks, and LiDAR tiles within a matched item are
+ * identified by asset convention (StacAsset.IsLidar/IsCopc), not by hardcoding an asset key.
  */
 using System;
 using System.Collections.Generic;
@@ -22,9 +21,6 @@ namespace StaclidarAddin.Stac
     /// </summary>
     public class StacClient : IDisposable
     {
-        /// <summary>Default catalog base URL (no trailing slash).</summary>
-        public const string DefaultBaseUri = "https://spved5ihrl.execute-api.us-west-2.amazonaws.com";
-
         private static readonly HttpClient _http;
         private static readonly JsonSerializerOptions _json;
 
@@ -39,7 +35,18 @@ namespace StaclidarAddin.Stac
             _json = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         }
 
-        public string BaseUri { get; set; } = DefaultBaseUri;
+        public string BaseUri { get; set; } = string.Empty;
+
+        /// <summary>Fetch all collections from the catalog.</summary>
+        public async Task<List<StacCollection>> GetCollectionsAsync(CancellationToken ct = default)
+        {
+            var url = BaseUri.TrimEnd('/') + "/collections";
+            using var resp = await _http.GetAsync(url, ct).ConfigureAwait(false);
+            await EnsureSuccessWithBodyAsync(resp, ct).ConfigureAwait(false);
+            await using var stream = await resp.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
+            var data = await JsonSerializer.DeserializeAsync<StacCollectionsResponse>(stream, _json, ct).ConfigureAwait(false);
+            return data?.Collections ?? new List<StacCollection>();
+        }
 
         /// <summary>
         /// Search for items intersecting a GeoJSON geometry (lon/lat, CRS84), via POST /search.

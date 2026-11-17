@@ -1,19 +1,16 @@
 # Output & Running
 
-## LiDAR phases
+## Catalog and collections
 
-Check one or more phases to search. **Phase 1 is disabled** -- hover over it to see why: Phase 1
-tiles are in regular LAZ format (not COPC), and should be downloaded using the
-[kyfromabove-stac-addin](https://ianhorn.github.io/kyfromabove-stac-addin/) tool instead. Phases 2
-and 3 are COPC-backed and supported here.
-
-## STAC catalog
-
-Staclidar searches the **KyFromAbove** STAC catalog only.
+There is no default catalog. Click **Choose catalog...** to pick a public STAC API from
+[STAC Index](https://stacindex.org), or type the URL of one. The catalog's point-cloud collections
+are then listed with a checkbox each (if none declares point-cloud data, all its collections are
+listed); tick the ones to search. Tiles must be COPC (cloud-optimized) LAZ files -- regular LAZ
+tiles can't be read or clipped here.
 
 ## Search Catalog
 
-Click **Search Catalog** to preview how many tiles intersect your current AOI and phase selection,
+Click **Search Catalog** to preview how many tiles intersect your current AOI and collection selection,
 without downloading or converting anything. The result also updates the **Download N COPC file(s)
 only** checkbox label with the count. **Run** always does its own fresh search regardless of
 whether you've clicked this first.
@@ -170,35 +167,22 @@ When you create a new dataset, a **Coordinate system** dropdown sets what the da
 Only the dataset's coordinate system changes; the `.las` files keep their own headers. The choice
 doesn't apply to **Add to existing dataset**, which keeps that dataset's coordinate system.
 
-### Hydro-enforced breaklines
+### Breaklines
 
-**Add hydro-enforced breaklines** (available once a dataset option is selected) downloads the
-KyFromAbove hydro-enforced breaklines inside the AOI and adds them to the LAS dataset as a
-`Hard_Line` surface constraint, so lakes, ponds, streams and bridges are enforced when the dataset
-is triangulated into a surface.
+**Add breaklines** (available once a dataset option is selected) adds a line feature class that you
+choose to the LAS dataset as a `Hard_Line` surface constraint, so the surface is enforced along those
+lines when the dataset is triangulated (for example hydro-enforced breaklines for lakes, ponds,
+streams and bridges). Tick it, then **Browse...** to a shapefile or geodatabase feature class.
 
-- **Phase 2 and Phase 3 only.** The Phase 1 breaklines service has no elevation (Z) values, so it
-  can't be used as a constraint (Phase 1 is also not selectable in Staclidar, see above).
-- **Clipped to the AOI.** The breaklines are clipped to the same polygon used to find tiles -- your
-  AOI, or the AOI plus buffer when *Clip to area of interest* has a buffer -- so this needs a
-  **polygon AOI**, or clipping with a buffer. Note the point cloud itself is only cropped when
-  *Clip to area of interest* is on; with clipping off you get whole tiles but breaklines only inside
-  the AOI.
-- **Reprojected to EPSG:3089.** The services are Web Mercator; Staclidar converts them to Kentucky
-  Single Zone (ftUS) to match the tiles, using ArcGIS Pro's default datum transformation (about 3 ft
-  different from a naive conversion, and the one that lines up with the LiDAR). Z is already in
-  feet.
-- **Where they go.** The clipped lines are written to a `breaklines_<timestamp>.gdb` (feature class
-  `Breaklines`, with `BL_TYPE` and `PHASE` fields) in the output folder, and added to the active map
-  as a **Hydro-enforced breaklines** layer above the LAS dataset. The dataset references that
-  geodatabase, so keep it alongside the dataset.
-- **Best effort.** If the breakline download fails, or none fall inside the AOI, the log says why and
-  the dataset is still built without the constraint.
+- **The lines need Z values.** Their own elevations are used (`Shape.Z`), and should be in the same
+  vertical units as the point cloud.
+- **Same coordinate system as the dataset.** Project the lines yourself first if they differ.
+- **Keep the feature class where it is.** The dataset references it, so don't move or delete it.
 
 ## Run / Cancel
 
-**Run** requires an AOI, at least one LiDAR phase, and an output folder (plus a dataset path if
-you've chosen to create/add to one, and -- if breaklines are on -- Phase 2 or 3 plus a polygon AOI or a clip buffer). It's disabled while a run or a catalog search is already in
+**Run** requires an AOI, a catalog with at least one ticked collection, and an output folder (plus a dataset path if
+you've chosen to create/add to one, and -- if breaklines are on -- the breaklines feature class). It's disabled while a run or a catalog search is already in
 progress.
 
 Click **Run** to start the search-download-convert pipeline; click **Cancel** to stop an
@@ -208,7 +192,7 @@ before it takes effect).
 ## Export Script
 
 Click **Export Script...** to write a stand-alone download/convert kit for the current AOI's
-matching tiles, using the same phase, output-mode and point-filter settings as Run -- for very large batches,
+matching tiles, using the same collection, output-mode and point-filter settings as Run -- for very large batches,
 running on another machine, or scheduling for later. A dialog asks for a format and a destination
 folder; the line under the format list describes whichever one is selected.
 

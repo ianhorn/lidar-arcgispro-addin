@@ -36,7 +36,7 @@
 
             <!-- Feedback opens a dialog to report a bug/request a feature (GitHub, or straight to
                  the developer with no account needed; see FeedbackDialog.xaml); Help opens the
-                 docs site. Same Feedback/Help pair and placement as kyfromabove-stac-addin's pane. -->
+                 docs site. Same Feedback/Help pair and placement as stac-arcgispro-addin's pane. -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,0,8">
                 <Button Content="Feedback" Command="{Binding FeedbackCommand}" Padding="10,3" Margin="0,0,6,0"
                         ToolTip="Report a bug, request a feature, or send feedback directly."/>
@@ -64,13 +64,26 @@
 
             <Separator Margin="0,0,0,12"/>
 
-            <TextBlock Text="LiDAR phase(s):" Margin="0,0,0,2"/>
+            <TextBlock Text="Catalog:" Margin="0,0,0,2"/>
+            <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding CatalogName}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <Button Grid.Column="1" Content="Choose catalog..." Command="{Binding ChooseCatalogCommand}" Padding="8,3"
+                        ToolTip="Pick a STAC API from STAC Index, or enter its URL. Its point-cloud collections are then listed below."/>
+            </Grid>
+            <TextBlock Text="{Binding CollectionsStatusText}" TextWrapping="Wrap" Margin="0,0,0,2"
+                       Visibility="{Binding CollectionsStatusText, Converter={StaticResource StringToVis}}"/>
+            <ItemsControl ItemsSource="{Binding Collections}" Margin="0,0,0,6" Visibility="{Binding HasCollections, Converter={StaticResource BoolToVis}}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <CheckBox Content="{Binding Title}" IsChecked="{Binding IsChecked}" Margin="0,1,0,1" ToolTip="{Binding Id}"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
             <WrapPanel Orientation="Horizontal" Margin="0,0,0,6">
-                <CheckBox Content="Phase 1" IsChecked="{Binding Phase1}" IsEnabled="False" VerticalAlignment="Center"/>
-                <Button Content="i" Style="{StaticResource InfoButtonStyle}" Margin="3,0,10,0"
-                        ToolTip="Phase 1 is disabled: its tiles are regular LAZ files, not COPC (cloud-optimized) like Phase 2 and 3, so Staclidar can't read or clip them. Download Phase 1 with the kyfromabove-stac-addin instead (https://ianhorn.github.io/kyfromabove-stac-addin/)."/>
-                <CheckBox Content="Phase 2" IsChecked="{Binding Phase2}" Margin="0,0,10,0"/>
-                <CheckBox Content="Phase 3" IsChecked="{Binding Phase3}" Margin="0,0,14,0"/>
                 <Button Content="Search Catalog" Command="{Binding SearchCatalogCommand}" Padding="10,3" Margin="0,2,0,0"/>
             </WrapPanel>
             <TextBlock Text="{Binding CatalogSearchStatusText}" TextWrapping="Wrap" Margin="0,0,0,4"
@@ -255,11 +268,19 @@
                 <Button Grid.Column="1" Content="Browse..." Command="{Binding BrowseExistingDatasetCommand}" Padding="8,3"/>
             </Grid>
 
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                <CheckBox Content="Add hydro-enforced breaklines" IsChecked="{Binding AddBreaklines}" IsEnabled="{Binding CanAddBreaklines}" VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                <CheckBox Content="Add breaklines" IsChecked="{Binding AddBreaklines}" IsEnabled="{Binding CanAddBreaklines}" VerticalAlignment="Center"/>
                 <Button Content="i" Style="{StaticResource InfoButtonStyle}"
-                        ToolTip="Downloads the KyFromAbove hydro-enforced breaklines inside the AOI (Phase 2 and 3; Phase 1 has no elevation values), clips them to it (the AOI plus buffer when clipping), reprojects to EPSG:3089, and adds them to the LAS dataset as a Hard_Line surface constraint. Needs a polygon AOI, or 'Clip to area of interest' with a buffer. If the download fails, the dataset is still built without them."/>
+                        ToolTip="Adds a line feature class you choose to the LAS dataset as a Hard_Line surface constraint, so the surface breaks along those lines (for example hydro-enforced breaklines for a lake or river). The lines need Z values: their own elevations are used. Only applies when the output creates or updates a LAS dataset."/>
             </StackPanel>
+            <Grid Margin="0,0,0,10" Visibility="{Binding AddBreaklines, Converter={StaticResource BoolToVis}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBox Text="{Binding BreaklinePath, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,6,0"/>
+                <Button Grid.Column="1" Content="Browse..." Command="{Binding BrowseBreaklinesCommand}" Padding="8,3"/>
+            </Grid>
 
             <TextBlock Text="{Binding ValidationText}" Foreground="Red" TextWrapping="Wrap" Margin="0,0,0,6"
                        Visibility="{Binding ValidationText, Converter={StaticResource StringToVis}}"/>

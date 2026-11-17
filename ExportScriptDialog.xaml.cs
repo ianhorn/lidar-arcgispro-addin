@@ -1,7 +1,7 @@
 /*
  * Modal dialog for "Export Script": lets the user pick the output format (Python, Jupyter
  * notebook, PowerShell, shell, or a stand-alone executable) and the destination folder before
- * StaclidarDockpaneViewModel actually writes the kit. Modeled directly on kyfromabove-ext's
+ * StaclidarDockpaneViewModel actually writes the kit. Modeled directly on stac-arcgispro-addin's
  * ExportScriptDialog -- including the "Executable" option, backed by this add-in's own
  * tools\StaclidarDownloader\ (extended with the convert/crop step that add-in has no need for).
  */

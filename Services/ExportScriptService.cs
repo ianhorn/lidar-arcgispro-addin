@@ -1,7 +1,7 @@
 /*
  * Builds a stand-alone Python/PowerShell/shell script that reproduces the current AOI's
  * download-and-convert step outside ArcGIS Pro -- for very large batches, running on another
- * machine, or scheduling for later. Modeled on kyfromabove-ext's
+ * machine, or scheduling for later. Modeled on stac-arcgispro-addin's
  * SearchDockpaneViewModel.BuildPython/PowerShell/ShellDownloadScript (same add-in family, same
  * "portable download kit" idea for its own raster/point-cloud downloads), with a PDAL convert (and
  * optional crop) step added since that add-in has no such step to export. LAS dataset

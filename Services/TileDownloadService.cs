@@ -1,6 +1,6 @@
 /*
  * Downloads COPC tiles to local disk via HttpClient (which correctly uses the OS certificate
- * store, unlike PDAL's bundled libcurl -- see PdalRunner). Trimmed from kyfromabove-ext's
+ * store, unlike PDAL's bundled libcurl -- see PdalRunner). Trimmed from stac-arcgispro-addin's
  * DownloadService pattern.
  */
 using System;

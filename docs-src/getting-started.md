@@ -11,9 +11,9 @@ no GitHub account needed -- and **Help** opens this documentation site in your b
 version** compares your installed build with the [latest release](https://github.com/ianhorn/lidar-arcgispro-addin/releases/latest)
 and, if there's a newer one, offers to open its download page (close ArcGIS Pro before installing it).
 
-![The Staclidar pane as it first opens: Area of Interest tools, LiDAR phase checkboxes, Search Catalog, the Output options, Add to LAS Dataset, and the Run, Cancel and Export Script buttons above a Progress log](images/pane-overview.png){ width="615" loading=lazy }
+![The Staclidar pane as it first opens: Area of Interest tools, the catalog and collection picker, Search Catalog, the Output options, Add to LAS Dataset, and the Run, Cancel and Export Script buttons above a Progress log](images/pane-overview.png){ width="615" loading=lazy }
 
-The pane reads top to bottom in the order you'd use it: set the area of interest, pick the phase(s),
+The pane reads top to bottom in the order you'd use it: set the area of interest, choose a catalog and collections,
 choose the output, optionally build a LAS dataset, then **Run** (or **Export Script...**) and watch
 the **Progress** log.
 
@@ -31,10 +31,10 @@ breaklines. The steps that follow explain each part.
    layer. The status line below the buttons updates to confirm what was captured (e.g. "AOI ready:
    Polygon AOI"), and a persistent Map Notes feature is added to the map (drawn AOIs only). See
    [Area of Interest](area-of-interest.md) for details, or **Clear Selection** to start over.
-2. **Choose LiDAR phase(s).** Check one or more phases. Phase 1 is disabled here -- see
-   [LiDAR phases](clip-and-run.md#lidar-phases).
+2. **Choose a catalog and collections.** Click **Choose catalog...**, pick a STAC API, then tick its
+   point-cloud collections -- see [Catalog and collections](clip-and-run.md#catalog-and-collections).
 3. **(Optional) Search Catalog.** Click **Search Catalog** to preview how many tiles match your
-   AOI and phase selection before running anything.
+   AOI and collection selection before running anything.
 4. **Choose an output mode.** Pick one of **Download COPC file(s) only**, **Download & Convert to
    LAS**, or **Download, Convert to LAS, Discard COPC** (the default). Each has an **i** button
    explaining the disk-space/speed tradeoff. See [Output modes](clip-and-run.md#output-modes).
@@ -50,14 +50,14 @@ breaklines. The steps that follow explain each part.
    folder; use **Browse...** to pick somewhere else.
 9. **(Optional) Add to LAS Dataset.** Choose **Create new dataset** or **Add to existing dataset**
    to fold the output `.las` (or `.zlas`) file(s) into a `.lasd` and add it to the map once the run
-   finishes. With a dataset chosen you can also check **Add hydro-enforced breaklines** to add the
-   Phase 2/3 breaklines inside the AOI as a surface constraint -- see
-   [Hydro-enforced breaklines](clip-and-run.md#hydro-enforced-breaklines).
+   finishes. With a dataset chosen you can also check **Add breaklines** and browse to a line feature
+   class (with Z values) to add as a surface constraint -- see
+   [Breaklines](clip-and-run.md#breaklines).
 10. **Click Run.** The pane's progress log fills in live as tiles are found, downloaded, and
    converted. **Cancel** stops an in-progress run.
 
 !!! tip "Re-running with different settings"
-    You can change the phases, output mode, clip/buffer, or output folder and click **Run** again
+    You can change the collections, output mode, clip/buffer, or output folder and click **Run** again
     without redrawing the AOI -- the AOI persists in the pane (and as a Map Notes feature) until
     you draw or select a new one, or click **Clear Selection**.
 

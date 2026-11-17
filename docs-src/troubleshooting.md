@@ -9,10 +9,10 @@
   StaclidarAddin.
 - The pane doesn't auto-open; click the **Staclidar** button on the **Staclidar** ribbon tab.
 
-## "No LiDAR coverage found for this AOI in the selected phase(s)"
+## "No LiDAR coverage found for this AOI in the selected collection(s)"
 
-The STAC search returned zero matching tiles. Try a different phase, or confirm the AOI is
-actually within Kentucky From Above's LiDAR coverage.
+The STAC search returned zero matching tiles. Try a different collection, or confirm the AOI is
+actually within the chosen catalog's LiDAR coverage.
 
 ## Search Catalog seems to stop at 200 tiles
 
@@ -55,22 +55,14 @@ for what geometry types it actually accepts.
 
 ## Breaklines weren't added to the LAS dataset
 
-Breaklines are best-effort: the run still finishes and the dataset is built without them, and the
-progress log says why. Common reasons:
+The run still finishes if the dataset is built without them. Common reasons:
 
-- **"Phase N breaklines have no elevation (Z) values"** -- only Phase 2 and Phase 3 breaklines carry Z;
-  Phase 1's don't, so they can't be a constraint.
-- **"No usable breaklines in the AOI"** -- none intersect the AOI (or the AOI plus buffer). Not every
-  area has hydro-enforced breaklines, and Phase 3 coverage in particular is partial.
-- **Run stops at validation** -- breaklines need a polygon AOI, or *Clip to area of interest* with a
-  buffer, since that polygon is what they're clipped to. They also need Phase 2 or 3 selected and a
-  LAS dataset option (*Create new* or *Add to existing*).
-- **A download error** -- the breakline services are separate from the STAC catalog; a network or
-  service hiccup skips just the breaklines. Run again to retry.
-
-The breaklines are also stored in a `breaklines_<timestamp>.gdb` in the output folder that the
-dataset references -- if the dataset shows no constraint after you moved or deleted the output
-folder, that geodatabase is what went missing.
+- **Run stops at validation** -- *Add breaklines* is ticked but no feature class is chosen, or no LAS
+  dataset option (*Create new* or *Add to existing*) is selected.
+- **The surface ignores them** -- the lines need Z values (the constraint uses `Shape.Z`) and the same
+  coordinate system as the dataset.
+- **The constraint is missing later** -- the dataset references the feature class; if you moved or
+  deleted it, that is what went missing.
 
 ## Double-clicking an exported `.ps1` opens an editor instead of running it
 
