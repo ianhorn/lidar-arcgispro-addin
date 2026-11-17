@@ -10,7 +10,7 @@
 using System;
 using System.Text;
 
-namespace KylidarAddin.Services.Copc
+namespace StaclidarAddin.Services.Copc
 {
     public static class CopcHeaderReader
     {

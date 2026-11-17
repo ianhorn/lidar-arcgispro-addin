@@ -6,9 +6,9 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace KylidarAddin
+namespace StaclidarAddin
 {
-    public partial class KylidarDockpaneView : UserControl
+    public partial class StaclidarDockpaneView : UserControl
     {
         // A plain string ToolTip renders as one unwrapped line, so the pane's long explanations ran off
         // the edge of the screen. Once loaded, every string tooltip in the pane is replaced with a real
@@ -22,7 +22,7 @@ namespace KylidarAddin
         // property has been swapped for the wrapped ToolTip object above.
         private ToolTip _openInfo;
 
-        public KylidarDockpaneView()
+        public StaclidarDockpaneView()
         {
             try { InitializeComponent(); }
             catch (Exception ex) { StartupLog.Report("loading the pane layout", ex); throw; }
@@ -86,7 +86,7 @@ namespace KylidarAddin
 
     /// <summary>Collapses a status/validation TextBlock when its bound string is null/empty, instead
     /// of the blank line it would otherwise always reserve (WPF doesn't zero-size a TextBlock just
-    /// because its Text is empty) -- see KylidarDockpaneView.xaml's "StringToVis" resource.</summary>
+    /// because its Text is empty) -- see StaclidarDockpaneView.xaml's "StringToVis" resource.</summary>
     public class EmptyStringToCollapsedConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>

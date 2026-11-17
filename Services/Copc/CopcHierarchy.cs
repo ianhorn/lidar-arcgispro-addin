@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace KylidarAddin.Services.Copc
+namespace StaclidarAddin.Services.Copc
 {
     public static class CopcHierarchy
     {

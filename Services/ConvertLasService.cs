@@ -28,7 +28,7 @@ using System.IO;
 using System.Threading.Tasks;
 using ArcGIS.Desktop.Core.Geoprocessing;
 
-namespace KylidarAddin.Services
+namespace StaclidarAddin.Services
 {
     public static class ConvertLasService
     {

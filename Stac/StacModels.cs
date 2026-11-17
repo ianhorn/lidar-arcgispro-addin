@@ -1,5 +1,5 @@
 /*
- * STAC API data models, trimmed to what kylidar-addin needs (AOI "intersects" search + COPC
+ * STAC API data models, trimmed to what lidar-arcgispro-addin needs (AOI "intersects" search + COPC
  * asset discovery). Duplicated from the fuller set in the kyfromabove-ext add-in on purpose --
  * these are two independent add-ins (see README) -- rather than shared as a library.
  * Conforms to STAC API 1.0.0 / stac-fastapi responses.
@@ -10,7 +10,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace KylidarAddin.Stac
+namespace StaclidarAddin.Stac
 {
     /// <summary>A STAC Link (pagination, self, parent, etc.).</summary>
     public class StacLink

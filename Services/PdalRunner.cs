@@ -20,7 +20,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Win32;
 
-namespace KylidarAddin.Services
+namespace StaclidarAddin.Services
 {
     public class PdalRunResult
     {
@@ -60,7 +60,7 @@ namespace KylidarAddin.Services
             if (pythonExe == null)
                 return new PdalRunResult { Success = false, Error = "Could not find ArcGIS Pro's bundled Python (arcgispro-py3)." };
 
-            var tempPipelinePath = Path.Combine(Path.GetTempPath(), $"kylidar_pipeline_{Guid.NewGuid():N}.json");
+            var tempPipelinePath = Path.Combine(Path.GetTempPath(), $"staclidar_pipeline_{Guid.NewGuid():N}.json");
             await File.WriteAllTextAsync(tempPipelinePath, pipelineJson, ct).ConfigureAwait(false);
 
             const string script =

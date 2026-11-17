@@ -49,10 +49,10 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 
-namespace KylidarAddin.Services
+namespace StaclidarAddin.Services
 {
-    /// <summary>Executable isn't handled by BuildScript below -- KylidarDockpaneViewModel.ExportScriptAsync
-    /// special-cases it before ever calling in here, copying the bundled tools\KylidarDownloader\
+    /// <summary>Executable isn't handled by BuildScript below -- StaclidarDockpaneViewModel.ExportScriptAsync
+    /// special-cases it before ever calling in here, copying the bundled tools\StaclidarDownloader\
     /// exe and appending a manifest instead of generating text (see that method).</summary>
     public enum ExportScriptFormat { Python, Notebook, PowerShell, Shell, Executable, R }
 
@@ -192,7 +192,7 @@ cat(sprintf('\nDone: %d succeeded, %d failed -> %s\n', ok, length(results) - ok,
             var lines = new List<string>
             {
                 "#!/usr/bin/env Rscript",
-                "# Kylidar stand-alone download/convert script (base R).",
+                "# Staclidar stand-alone download/convert script (base R).",
                 $"# Generated {DateTime.Now:yyyy-MM-dd HH:mm} -- {tileUrls.Count} tile(s).",
                 "#",
                 "# Edit dest_folder below if needed, then run: Rscript \"<this file>\"  (or source() it in R / RStudio)",
@@ -299,7 +299,7 @@ cat(sprintf('\nDone: %d succeeded, %d failed -> %s\n', ok, length(results) - ok,
             {
                 "#!/usr/bin/env python3",
                 "\"\"\"",
-                "Kylidar stand-alone download/convert script.",
+                "Staclidar stand-alone download/convert script.",
                 $"Generated {DateTime.Now:yyyy-MM-dd HH:mm} -- {tileUrls.Count} tile(s).",
                 "",
                 "Edit DEST_FOLDER below if needed, then run:",
@@ -406,7 +406,7 @@ cat(sprintf('\nDone: %d succeeded, %d failed -> %s\n', ok, length(results) - ok,
         {
             var introSource = new List<string>
             {
-                "# Kylidar stand-alone download/convert notebook",
+                "# Staclidar stand-alone download/convert notebook",
                 "",
                 $"Generated {DateTime.Now:yyyy-MM-dd HH:mm} -- {tileUrls.Count} tile(s).",
                 "",
@@ -550,7 +550,7 @@ cat(sprintf('\nDone: %d succeeded, %d failed -> %s\n', ok, length(results) - ok,
             var lines = new List<string>
             {
                 "<#",
-                "    Kylidar stand-alone download/convert script",
+                "    Staclidar stand-alone download/convert script",
                 $"    Generated {DateTime.Now:yyyy-MM-dd HH:mm} -- {tileUrls.Count} tile(s).",
                 "",
                 "    Edit $DestFolder below if needed, then run:",
@@ -704,7 +704,7 @@ cat(sprintf('\nDone: %d succeeded, %d failed -> %s\n', ok, length(results) - ok,
             var lines = new List<string>
             {
                 "#!/usr/bin/env bash",
-                "# Kylidar stand-alone download/convert script",
+                "# Staclidar stand-alone download/convert script",
                 $"# Generated {DateTime.Now:yyyy-MM-dd HH:mm} -- {tileUrls.Count} tile(s).",
                 "# Edit DEST_FOLDER below if needed, then run: bash \"<this file>\"",
                 "# CONVERT needs the \"pdal\" CLI on PATH. LAS dataset creation (an ArcGIS Pro",

@@ -1,6 +1,6 @@
 using ArcGIS.Desktop.Framework.Contracts;
 
-namespace KylidarAddin
+namespace StaclidarAddin
 {
     /// <summary>One checkbox in the pane's Point filter: a LAS classification code and whether to keep it.</summary>
     internal class PointClassOption : PropertyChangedBase
@@ -40,7 +40,7 @@ namespace KylidarAddin
     }
 }
 
-namespace KylidarAddin
+namespace StaclidarAddin
 {
     /// <summary>A preset button ("All", "None", "Ground only", ...). A real class with properties, not a
     /// value tuple: WPF bindings only see properties, and a tuple's Name/Codes are fields, so a
@@ -58,7 +58,7 @@ namespace KylidarAddin
     }
 }
 
-namespace KylidarAddin
+namespace StaclidarAddin
 {
     /// <summary>A preset button for the return checkboxes ("Last (incl. single)", ...); a class with
     /// properties for the same reason as PointClassPreset.</summary>

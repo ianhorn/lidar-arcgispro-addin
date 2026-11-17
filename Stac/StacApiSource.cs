@@ -1,5 +1,5 @@
 /*
- * One STAC API endpoint the dock pane can search. Kylidar uses only the built-in KyFromAbove
+ * One STAC API endpoint the dock pane can search. Staclidar uses only the built-in KyFromAbove
  * catalog, but the search code takes a list of sources.
  *
  * Ported from kyfromabove-ext (same class, same name) -- see that add-in's StacApiSource.cs.
@@ -9,7 +9,7 @@
  */
 using System;
 
-namespace KylidarAddin.Stac
+namespace StaclidarAddin.Stac
 {
     public class StacApiSource
     {

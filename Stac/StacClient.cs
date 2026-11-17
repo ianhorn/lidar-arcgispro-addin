@@ -1,5 +1,5 @@
 /*
- * STAC API HTTP client, trimmed to what kylidar-addin needs: a single "intersects" search,
+ * STAC API HTTP client, trimmed to what lidar-arcgispro-addin needs: a single "intersects" search,
  * optionally scoped to specific collections (e.g. one LiDAR phase). Default base points at the
  * Kentucky From Above catalog, but the API/collections this add-in targets may change later --
  * BaseUri is a mutable property, and LiDAR tiles within a matched item are still identified by
@@ -14,7 +14,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace KylidarAddin.Stac
+namespace StaclidarAddin.Stac
 {
     /// <summary>
     /// HttpClient-backed client for a STAC API. Uses a single shared static HttpClient
@@ -35,7 +35,7 @@ namespace KylidarAddin.Stac
                 Timeout = TimeSpan.FromSeconds(120)
             };
             _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            _http.DefaultRequestHeaders.UserAgent.ParseAdd("KylidarAddin/1.0");
+            _http.DefaultRequestHeaders.UserAgent.ParseAdd("StaclidarAddin/1.0");
             _json = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         }
 

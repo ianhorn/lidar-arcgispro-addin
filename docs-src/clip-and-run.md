@@ -9,7 +9,7 @@ and 3 are COPC-backed and supported here.
 
 ## STAC catalog
 
-Kylidar searches the **KyFromAbove** STAC catalog only.
+Staclidar searches the **KyFromAbove** STAC catalog only.
 
 ## Search Catalog
 
@@ -90,7 +90,7 @@ what is kept, e.g. **Point filter: Ground; last return** (or **all points** when
   default, and the flag is kept in the `.las` either way, so Pro can still filter on it later.
 
 Classes and returns combine: **Ground only** with **Last (incl. single)** keeps ground points
-that are also the last return of their pulse. Kylidar applies the filter with PDAL after any clip, so the points that survive are the
+that are also the last return of their pulse. Staclidar applies the filter with PDAL after any clip, so the points that survive are the
 ones inside the area of interest *and* matching the filter.
 
 - **Only for converted output.** The filter applies to the two convert modes. **Download COPC
@@ -127,12 +127,12 @@ The buffer (when set) widens *both* the STAC search area and the crop area -- se
 
 !!! warning "Polygons with holes, gaps, or islands"
     A drawn/selected polygon AOI with holes, gaps, or islands can make PDAL's crop step error.
-    Kylidar warns about this under the clip checkbox when it applies, but can't fully paper over
+    Staclidar warns about this under the clip checkbox when it applies, but can't fully paper over
     it -- simplify the AOI if you hit a crop failure.
 
 ## Output folder
 
-Defaults to a timestamped folder (`kylidar_clip_<yyyyMMdd_HHmmss>`) inside the current project's own
+Defaults to a timestamped folder (`staclidar_clip_<yyyyMMdd_HHmmss>`) inside the current project's own
 folder -- the one holding the open `.aprx` -- rather than a Windows temp directory, so the output
 isn't at risk of being cleaned up along with anything ArcGIS Pro considers temporary. Falls back to
 the Windows temp directory if no project is open. Use **Browse...** to choose a different location
@@ -178,13 +178,13 @@ KyFromAbove hydro-enforced breaklines inside the AOI and adds them to the LAS da
 is triangulated into a surface.
 
 - **Phase 2 and Phase 3 only.** The Phase 1 breaklines service has no elevation (Z) values, so it
-  can't be used as a constraint (Phase 1 is also not selectable in Kylidar, see above).
+  can't be used as a constraint (Phase 1 is also not selectable in Staclidar, see above).
 - **Clipped to the AOI.** The breaklines are clipped to the same polygon used to find tiles -- your
   AOI, or the AOI plus buffer when *Clip to area of interest* has a buffer -- so this needs a
   **polygon AOI**, or clipping with a buffer. Note the point cloud itself is only cropped when
   *Clip to area of interest* is on; with clipping off you get whole tiles but breaklines only inside
   the AOI.
-- **Reprojected to EPSG:3089.** The services are Web Mercator; Kylidar converts them to Kentucky
+- **Reprojected to EPSG:3089.** The services are Web Mercator; Staclidar converts them to Kentucky
   Single Zone (ftUS) to match the tiles, using ArcGIS Pro's default datum transformation (about 3 ft
   different from a naive conversion, and the one that lines up with the LiDAR). Z is already in
   feet.
@@ -226,7 +226,7 @@ The formats:
 - **Shell script (.sh)** -- macOS/Linux/WSL, needs `curl`.
 - **Executable (.exe)** -- Windows only; a single, self-contained file (the tile list and settings
   are embedded in it), with no Python or .NET install. It is the add-in's bundled
-  `KylidarDownloader.exe` with your manifest appended.
+  `StaclidarDownloader.exe` with your manifest appended.
 
 Any format whose output mode converts to `.las` also needs the `pdal` command-line tool available
 where it runs -- see [Running an exported script](#running-an-exported-script) below, since on
@@ -261,10 +261,10 @@ environment that activation sets up.
 | Format | How to run |
 |---|---|
 | **Executable (.exe)** | Double-click it. For a download-only export that is all you need. If it converts, launch it from the Python Command Prompt instead (type its path, or `cd` to its folder and type its name). It stays open with *Press Enter to exit...* when it finishes, so you can read the result. Windows SmartScreen may warn about it, since it isn't code-signed. |
-| **PowerShell (.ps1)** | Double-clicking a `.ps1` opens it in an editor rather than running it -- that's a Windows default, not a problem with the script. Run it from a prompt: `powershell -ExecutionPolicy Bypass -File "C:\path\to\kylidar_export_....ps1"`. The `-ExecutionPolicy Bypass` covers just that one run, and avoids the "running scripts is disabled on this system" error. Right-click → **Run with PowerShell** also usually works, but the window can close before you read the output. PowerShell ISE works too (open the file, press **F5**), but it isn't Pro's environment, so it can only do download-only exports. |
-| **Python (.py)** | `python "C:\path\to\kylidar_export_....py"` -- from the Python Command Prompt, `python` is Pro's own Python, which needs nothing installed beyond what Pro has. |
+| **PowerShell (.ps1)** | Double-clicking a `.ps1` opens it in an editor rather than running it -- that's a Windows default, not a problem with the script. Run it from a prompt: `powershell -ExecutionPolicy Bypass -File "C:\path\to\staclidar_export_....ps1"`. The `-ExecutionPolicy Bypass` covers just that one run, and avoids the "running scripts is disabled on this system" error. Right-click → **Run with PowerShell** also usually works, but the window can close before you read the output. PowerShell ISE works too (open the file, press **F5**), but it isn't Pro's environment, so it can only do download-only exports. |
+| **Python (.py)** | `python "C:\path\to\staclidar_export_....py"` -- from the Python Command Prompt, `python` is Pro's own Python, which needs nothing installed beyond what Pro has. |
 | **Notebook (.ipynb)** | Open it in Jupyter/JupyterLab or VS Code and run the cells top to bottom. When converting, the notebook's kernel must be an environment that has `pdal` (Pro's Python environment has it). |
-| **Shell (.sh)** | `bash "/path/to/kylidar_export_....sh"` on macOS, Linux or WSL. Needs `curl`, plus `pdal` when converting. |
+| **Shell (.sh)** | `bash "/path/to/staclidar_export_....sh"` on macOS, Linux or WSL. Needs `curl`, plus `pdal` when converting. |
 
 ## Progress log
 

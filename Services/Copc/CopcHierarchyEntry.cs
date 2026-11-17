@@ -1,4 +1,4 @@
-namespace KylidarAddin.Services.Copc
+namespace StaclidarAddin.Services.Copc
 {
     /// <summary>
     /// One 32-byte entry from a COPC hierarchy page: an octree node's location (level/x/y/z) plus

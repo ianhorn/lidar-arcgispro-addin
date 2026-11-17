@@ -1,10 +1,10 @@
-# Kylidar Add-in
+# Staclidar Add-in
 
-**Kylidar** is an ArcGIS Pro add-in for finding, downloading, and converting
+**Staclidar** is an ArcGIS Pro add-in for finding, downloading, and converting
 [Kentucky From Above](https://kyfromabove.ky.gov/) LiDAR point-cloud tiles to `.las`, optionally
 folding the result straight into a LAS dataset -- without leaving ArcGIS Pro.
 
-It adds a dockable **Kylidar** pane with tools to define an area of interest on the map, preview
+It adds a dockable **Staclidar** pane with tools to define an area of interest on the map, preview
 how many tiles match it, choose an output mode, and run a search-download-convert pipeline backed
 by a [STAC API](https://github.com/radiantearth/stac-api-spec) and [PDAL](https://pdal.io/).
 
@@ -50,6 +50,6 @@ by a [STAC API](https://github.com/radiantearth/stac-api-spec) and [PDAL](https:
   Export Script, and the run/cancel/progress workflow
 
 !!! note "Point clouds only, not raster"
-    Kylidar is scoped to LiDAR point-cloud (COPC/LAS) data. For imagery, DEM, or other raster
+    Staclidar is scoped to LiDAR point-cloud (COPC/LAS) data. For imagery, DEM, or other raster
     products from Kentucky From Above, see the companion
     [kyfromabove-stac-addin](https://ianhorn.github.io/kyfromabove-stac-addin/).

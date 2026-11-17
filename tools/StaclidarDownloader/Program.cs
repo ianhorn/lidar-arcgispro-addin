@@ -1,4 +1,4 @@
-// KylidarDownloader: stand-alone console downloader/converter generated/bundled by the Kylidar
+// StaclidarDownloader: stand-alone console downloader/converter generated/bundled by the Staclidar
 // ArcGIS Pro add-in's "Export Script" -> Executable option.
 //
 // Reads its manifest (tile URLs, destination folder, output mode, crop WKT) and, for each tile:
@@ -14,19 +14,19 @@
 // required to run this.
 //
 // The manifest normally travels APPENDED to this exe's own file (see TryReadEmbeddedManifest /
-// the matching write side in KylidarDockpaneViewModel.BuildDownloaderManifest), so Export
+// the matching write side in StaclidarDockpaneViewModel.BuildDownloaderManifest), so Export
 // Script's "Executable" option produces a single, self-contained .exe -- no sidecar file. A
 // manifest.json path can still be passed explicitly (or found next to the exe, same filename
 // stem) for local testing without rebuilding a manifest-embedded exe each time.
 //
-// Usage: KylidarDownloader.exe [path-to-manifest.json]
+// Usage: StaclidarDownloader.exe [path-to-manifest.json]
 
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace KylidarDownloader;
+namespace StaclidarDownloader;
 
 internal sealed class Manifest
 {
@@ -48,7 +48,7 @@ internal partial class ManifestJsonContext : JsonSerializerContext
 
 internal static class Program
 {
-    // Must match KylidarDockpaneViewModel's write side exactly: 8 bytes ASCII magic, right at
+    // Must match StaclidarDockpaneViewModel's write side exactly: 8 bytes ASCII magic, right at
     // EOF, with the 8-byte little-endian JSON byte-length immediately before it. Appending bytes
     // after a published single-file .NET exe is safe -- the runtime locates its own bundle via an
     // absolute offset baked into the PE headers at publish time, not by scanning from the end of
@@ -65,7 +65,7 @@ internal static class Program
             // with the same filename stem -- useful for local testing.
             var manifestPath = args.Length > 0
                 ? args[0]
-                : Path.ChangeExtension(Environment.ProcessPath ?? Path.Combine(AppContext.BaseDirectory, "KylidarDownloader.exe"), ".json");
+                : Path.ChangeExtension(Environment.ProcessPath ?? Path.Combine(AppContext.BaseDirectory, "StaclidarDownloader.exe"), ".json");
 
             if (!File.Exists(manifestPath))
             {
@@ -102,7 +102,7 @@ internal static class Program
         var concurrency = Math.Max(1, (int)(Environment.ProcessorCount * 0.5));
 
         Directory.CreateDirectory(manifest.DestFolder);
-        Console.WriteLine($"Kylidar downloader -- {manifest.Tiles.Count} tile(s) -> {manifest.DestFolder}");
+        Console.WriteLine($"Staclidar downloader -- {manifest.Tiles.Count} tile(s) -> {manifest.DestFolder}");
         Console.WriteLine($"Convert: {manifest.Convert}, discard raw: {manifest.DiscardRaw}, cropping: {manifest.CropWktParts.Count > 0}");
         Console.WriteLine($"Concurrency: {concurrency}");
         Console.WriteLine();

@@ -21,7 +21,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace KylidarAddin.Services
+namespace StaclidarAddin.Services
 {
     /// <summary>Which returns to keep: any combination of the four disjoint groups.</summary>
     [System.Flags]

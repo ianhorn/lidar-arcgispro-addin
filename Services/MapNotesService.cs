@@ -20,7 +20,7 @@ using ArcGIS.Desktop.Editing;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Mapping;
 
-namespace KylidarAddin.Services
+namespace StaclidarAddin.Services
 {
     internal enum MapNoteKind { Point, Line, Polygon }
 

@@ -1,9 +1,9 @@
-site_name: Kylidar Add-in
+site_name: Staclidar Add-in
 site_description: ArcGIS Pro add-in for finding, downloading, and converting Kentucky From Above LiDAR point-cloud data, with optional clipping to an area of interest.
-site_author: Kylidar
-site_url: https://ianhorn.github.io/kylidar-addin/
-repo_url: https://github.com/ianhorn/kylidar-addin
-repo_name: ianhorn/kylidar-addin
+site_author: Staclidar
+site_url: https://ianhorn.github.io/lidar-arcgispro-addin/
+repo_url: https://github.com/ianhorn/lidar-arcgispro-addin
+repo_name: ianhorn/lidar-arcgispro-addin
 edit_uri: edit/main/docs-src/
 
 # Markdown source lives in docs-src/; built HTML goes to docs/, which the GitHub Actions

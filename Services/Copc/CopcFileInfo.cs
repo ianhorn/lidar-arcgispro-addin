@@ -1,4 +1,4 @@
-namespace KylidarAddin.Services.Copc
+namespace StaclidarAddin.Services.Copc
 {
     /// <summary>Parsed COPC info VLR (160-byte payload, user_id "copc", record_id 1).</summary>
     public class CopcInfo

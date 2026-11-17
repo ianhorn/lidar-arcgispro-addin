@@ -39,7 +39,7 @@ using ArcGIS.Core.Data;
 using ArcGIS.Core.Data.DDL;
 using ArcGIS.Core.Geometry;
 
-namespace KylidarAddin.Services
+namespace StaclidarAddin.Services
 {
     /// <summary>The area breaklines are fetched for and clipped to: the same polygon the tile search
     /// used (AOI, buffered when clipping with a buffer), in both spatial references it's needed in.</summary>

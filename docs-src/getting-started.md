@@ -2,16 +2,16 @@
 
 ## Open the pane
 
-Click the **Kylidar** tab, then the **Kylidar** button. This opens a dockable pane (docked
+Click the **Staclidar** tab, then the **Staclidar** button. This opens a dockable pane (docked
 alongside the Contents pane by default) that stays open as you work.
 
 **Feedback** and **Help**, at the top of the pane, are available any time: **Feedback** opens a
 dialog to report a bug or request a feature -- either on GitHub, or straight to the developer with
 no GitHub account needed -- and **Help** opens this documentation site in your browser. **Check
-version** compares your installed build with the [latest release](https://github.com/ianhorn/kylidar-addin/releases/latest)
+version** compares your installed build with the [latest release](https://github.com/ianhorn/lidar-arcgispro-addin/releases/latest)
 and, if there's a newer one, offers to open its download page (close ArcGIS Pro before installing it).
 
-![The Kylidar pane as it first opens: Area of Interest tools, LiDAR phase checkboxes, Search Catalog, the Output options, Add to LAS Dataset, and the Run, Cancel and Export Script buttons above a Progress log](images/pane-overview.png){ width="615" loading=lazy }
+![The Staclidar pane as it first opens: Area of Interest tools, LiDAR phase checkboxes, Search Catalog, the Output options, Add to LAS Dataset, and the Run, Cancel and Export Script buttons above a Progress log](images/pane-overview.png){ width="615" loading=lazy }
 
 The pane reads top to bottom in the order you'd use it: set the area of interest, pick the phase(s),
 choose the output, optionally build a LAS dataset, then **Run** (or **Export Script...**) and watch
@@ -23,7 +23,7 @@ The pane below is set up for a typical run: a polygon AOI, Phase 3, one tile fou
 Catalog**, clipping to the AOI with a 100 ft buffer, and a new LAS dataset with hydro-enforced
 breaklines. The steps that follow explain each part.
 
-![The Kylidar pane configured for a run: AOI ready as a Polygon AOI, Phase 3 checked, 1 LiDAR tile found, Download Convert to LAS Discard COPC selected, Clip to area of interest checked with a 100 foot buffer, Create new dataset selected, and Add hydro-enforced breaklines checked](images/pane-configured.png){ width="420" loading=lazy }
+![The Staclidar pane configured for a run: AOI ready as a Polygon AOI, Phase 3 checked, 1 LiDAR tile found, Download Convert to LAS Discard COPC selected, Clip to area of interest checked with a 100 foot buffer, Create new dataset selected, and Add hydro-enforced breaklines checked](images/pane-configured.png){ width="420" loading=lazy }
 
 1. **Set an area of interest.** Under **Area of Interest**, click **Draw Point**, **Draw Line**,
    **Draw Polygon**, or **Select Feature** and define your AOI on the active map, or **Browse for

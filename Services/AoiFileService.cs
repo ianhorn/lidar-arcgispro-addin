@@ -14,7 +14,7 @@ using System.IO;
 using ArcGIS.Core.Data;
 using ArcGIS.Core.Geometry;
 
-namespace KylidarAddin.Services
+namespace StaclidarAddin.Services
 {
     public static class AoiFileService
     {

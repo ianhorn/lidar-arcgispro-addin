@@ -21,7 +21,7 @@ using System.Text;
 using System.Text.Json;
 using ArcGIS.Core.Geometry;
 
-namespace KylidarAddin.Services
+namespace StaclidarAddin.Services
 {
     public static class GeoJsonConverter
     {

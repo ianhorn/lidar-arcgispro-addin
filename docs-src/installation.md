@@ -13,15 +13,15 @@ ships it.
 
 ## Download pre-built add-in
 
-[![Downloads](https://img.shields.io/github/downloads/ianhorn/kylidar-addin/total.svg)](https://github.com/ianhorn/kylidar-addin/releases)
+[![Downloads](https://img.shields.io/github/downloads/ianhorn/lidar-arcgispro-addin/total.svg)](https://github.com/ianhorn/lidar-arcgispro-addin/releases)
 
 Prefer not to build from source? Grab the compiled `.esriAddinX` matching your installed ArcGIS Pro
-version from the [latest release](https://github.com/ianhorn/kylidar-addin/releases/latest):
+version from the [latest release](https://github.com/ianhorn/lidar-arcgispro-addin/releases/latest):
 
-- **ArcGIS Pro 3.6.x** -- [KylidarAddin-3.6.x.esriAddinX](https://github.com/ianhorn/kylidar-addin/releases/latest/download/KylidarAddin-3.6.x.esriAddinX)
-- **ArcGIS Pro 3.7 or later** -- [KylidarAddin-3.7.x.esriAddinX](https://github.com/ianhorn/kylidar-addin/releases/latest/download/KylidarAddin-3.7.x.esriAddinX)
+- **ArcGIS Pro 3.6.x** -- [StaclidarAddin-3.6.x.esriAddinX](https://github.com/ianhorn/lidar-arcgispro-addin/releases/latest/download/StaclidarAddin-3.6.x.esriAddinX)
+- **ArcGIS Pro 3.7 or later** -- [StaclidarAddin-3.7.x.esriAddinX](https://github.com/ianhorn/lidar-arcgispro-addin/releases/latest/download/StaclidarAddin-3.7.x.esriAddinX)
 
-(The source is also always on `main` at [`AddInX-Files/`](https://github.com/ianhorn/kylidar-addin/tree/main/AddInX-Files)
+(The source is also always on `main` at [`AddInX-Files/`](https://github.com/ianhorn/lidar-arcgispro-addin/tree/main/AddInX-Files)
 if you'd rather fetch the latest build directly, without going through a release.)
 
 Both are built from the same source, at the same commit -- the only difference is which .NET
@@ -36,22 +36,22 @@ Manager flow.
 1. Clone the repository:
 
     ```bash
-    git clone https://github.com/ianhorn/kylidar-addin.git
-    cd kylidar-addin
+    git clone https://github.com/ianhorn/lidar-arcgispro-addin.git
+    cd lidar-arcgispro-addin
     ```
 
-2. Open `kylidar-addin.slnx` in Visual Studio.
-3. Build the `KylidarAddin` project (Debug or Release). The ArcGIS Pro SDK's build targets
+2. Open `staclidar-addin.slnx` in Visual Studio.
+3. Build the `StaclidarAddin` project (Debug or Release). The ArcGIS Pro SDK's build targets
    package the compiled assembly, `Config.daml`, and the toolbar images into an `.esriAddinX`
    file and register it with ArcGIS Pro automatically.
 4. Press **F5** (or **Start**) to launch ArcGIS Pro with the add-in already loaded, or just open
    ArcGIS Pro normally -- once built, the add-in stays registered.
 
 !!! note "Bundled downloader exe"
-    The add-in packages a pre-built `KylidarDownloader.exe` (the stand-alone downloader behind
-    Export Script's **Executable** option) from `tools\KylidarDownloader\bin\publish-win-x64\`. It's
+    The add-in packages a pre-built `StaclidarDownloader.exe` (the stand-alone downloader behind
+    Export Script's **Executable** option) from `tools\StaclidarDownloader\bin\publish-win-x64\`. It's
     committed to the repo, so a normal build just works. Only rebuild it if you change that
-    project's source: in `tools\KylidarDownloader`, run
+    project's source: in `tools\StaclidarDownloader`, run
     `dotnet publish -c Release -r win-x64 -o bin\publish-win-x64`.
 
 !!! warning "Build with Visual Studio's MSBuild, not `dotnet build`"
@@ -59,7 +59,7 @@ Manager flow.
     used by `dotnet build` doesn't support. From the command line, build with:
 
     ```
-    "C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe" KylidarAddin.csproj -t:Build -p:Configuration=Debug
+    "C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe" StaclidarAddin.csproj -t:Build -p:Configuration=Debug
     ```
 
 !!! tip "No Visual Studio?"
@@ -82,27 +82,27 @@ the command line, without needing Pro 3.7 actually installed (the `HintPath` ref
 assembly's version ships in the built add-in):
 
 ```
-"C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe" KylidarAddin.csproj -t:Restore -p:Configuration=Release -p:TargetFramework=net10.0-windows
-"C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe" KylidarAddin.csproj -p:Configuration=Release -p:TargetFramework=net10.0-windows
+"C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe" StaclidarAddin.csproj -t:Restore -p:Configuration=Release -p:TargetFramework=net10.0-windows
+"C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe" StaclidarAddin.csproj -p:Configuration=Release -p:TargetFramework=net10.0-windows
 ```
 
 !!! note "Publishing a rebuilt download"
     The two `.esriAddinX` files are committed to `AddInX-Files/` on every rebuild (so `main` always
     has the latest build), but the **Download pre-built add-in** links above point at a
-    [GitHub release](https://github.com/ianhorn/kylidar-addin/releases) instead, since only release
+    [GitHub release](https://github.com/ianhorn/lidar-arcgispro-addin/releases) instead, since only release
     assets get a tracked download count. After rebuilding, also publish a release with the two
-    files attached (`gh release create v<version> AddInX-Files/KylidarAddin-3.6.x.esriAddinX
-    AddInX-Files/KylidarAddin-3.7.x.esriAddinX`) so the `/releases/latest/download/...` links serve
+    files attached (`gh release create v<version> AddInX-Files/StaclidarAddin-3.6.x.esriAddinX
+    AddInX-Files/StaclidarAddin-3.7.x.esriAddinX`) so the `/releases/latest/download/...` links serve
     the new build.
 
-    **Bump `<Version>` in `KylidarAddin.csproj` to match the tag first** (e.g. `1.1.0` for `v1.1.0`)
+    **Bump `<Version>` in `StaclidarAddin.csproj` to match the tag first** (e.g. `1.1.0` for `v1.1.0`)
     and rebuild: the pane's **Check version** button compares the installed build's version with
     the latest release's tag, so a release built without the bump would report itself as out of
     date.
 
 ## Verifying the install
 
-Open ArcGIS Pro and look for the **Kylidar** ribbon tab with a **Kylidar** button. Clicking it
-should open the dockable Kylidar pane (see [Getting Started](getting-started.md)). If the tab is
+Open ArcGIS Pro and look for the **Staclidar** ribbon tab with a **Staclidar** button. Clicking it
+should open the dockable Staclidar pane (see [Getting Started](getting-started.md)). If the tab is
 missing, confirm the build succeeded with no errors and that ArcGIS Pro was restarted after the
 first build.

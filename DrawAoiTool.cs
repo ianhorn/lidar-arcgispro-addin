@@ -21,14 +21,14 @@ using ArcGIS.Core.Data;
 using ArcGIS.Core.Geometry;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Mapping;
-using KylidarAddin.Services;
+using StaclidarAddin.Services;
 
-namespace KylidarAddin
+namespace StaclidarAddin
 {
     /// <summary>
     /// Holds the most recently sketched/selected AOI geometry, in its original map spatial
     /// reference, plus a short human-readable description. Raises <see cref="Changed"/> so the
-    /// Kylidar dock pane can update its status line without a MessageBox popup.
+    /// Staclidar dock pane can update its status line without a MessageBox popup.
     /// </summary>
     internal static class AoiState
     {
@@ -93,7 +93,7 @@ namespace KylidarAddin
                 catch (Exception ex)
                 {
                     MessageBox.Show($"Drew the AOI, but couldn't add it to the {_aoiLabel} Map Notes layer: {ex.Message}",
-                        "Kylidar", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        "Staclidar", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
 
@@ -104,19 +104,19 @@ namespace KylidarAddin
 
     internal class DrawPointAoiTool : DrawAoiToolBase
     {
-        public const string ToolId = "KylidarAddin_DrawPointAoiTool";
+        public const string ToolId = "StaclidarAddin_DrawPointAoiTool";
         public DrawPointAoiTool() : base(SketchGeometryType.Point, MapNoteKind.Point, "Point AOI") { }
     }
 
     internal class DrawLineAoiTool : DrawAoiToolBase
     {
-        public const string ToolId = "KylidarAddin_DrawLineAoiTool";
+        public const string ToolId = "StaclidarAddin_DrawLineAoiTool";
         public DrawLineAoiTool() : base(SketchGeometryType.Line, MapNoteKind.Line, "Line AOI") { }
     }
 
     internal class DrawPolygonAoiTool : DrawAoiToolBase
     {
-        public const string ToolId = "KylidarAddin_DrawPolygonAoiTool";
+        public const string ToolId = "StaclidarAddin_DrawPolygonAoiTool";
         public DrawPolygonAoiTool() : base(SketchGeometryType.Polygon, MapNoteKind.Polygon, "Polygon AOI") { }
     }
 
@@ -127,7 +127,7 @@ namespace KylidarAddin
     /// </summary>
     internal class SelectFeatureAoiTool : MapTool
     {
-        public const string ToolId = "KylidarAddin_SelectFeatureAoiTool";
+        public const string ToolId = "StaclidarAddin_SelectFeatureAoiTool";
 
         public SelectFeatureAoiTool()
         {
@@ -166,7 +166,7 @@ namespace KylidarAddin
                 if (selected == null)
                 {
                     MessageBox.Show("No feature found there. Click directly on a feature, or drag a box over one.",
-                        "Kylidar", MessageBoxButton.OK, MessageBoxImage.Information);
+                        "Staclidar", MessageBoxButton.OK, MessageBoxImage.Information);
                     return false;
                 }
 
@@ -202,7 +202,7 @@ namespace KylidarAddin
                 if (unioned == null)
                 {
                     MessageBox.Show("No feature found there. Click directly on a feature, or drag a box over one.",
-                        "Kylidar", MessageBoxButton.OK, MessageBoxImage.Information);
+                        "Staclidar", MessageBoxButton.OK, MessageBoxImage.Information);
                     return false;
                 }
 
@@ -225,7 +225,7 @@ namespace KylidarAddin
                 // OnSketchCompleteAsync unhandled, which has previously crashed Pro entirely rather
                 // than just failing this one selection.
                 MessageBox.Show($"Couldn't use the selected feature(s) as an AOI: {ex.Message}",
-                    "Kylidar", MessageBoxButton.OK, MessageBoxImage.Error);
+                    "Staclidar", MessageBoxButton.OK, MessageBoxImage.Error);
                 return false;
             }
             finally

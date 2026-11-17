@@ -1,12 +1,12 @@
-# Kylidar Add-in
+# Staclidar Add-in
 
-[![Downloads](https://img.shields.io/github/downloads/ianhorn/kylidar-addin/total.svg)](https://github.com/ianhorn/kylidar-addin/releases)
+[![Downloads](https://img.shields.io/github/downloads/ianhorn/lidar-arcgispro-addin/total.svg)](https://github.com/ianhorn/lidar-arcgispro-addin/releases)
 
 An ArcGIS Pro add-in built with the ArcGIS Pro SDK for .NET.
 
 ## Documentation
 
-Published at **https://ianhorn.github.io/kylidar-addin/**, built with
+Published at **https://ianhorn.github.io/lidar-arcgispro-addin/**, built with
 [MkDocs](https://www.mkdocs.org/) and the [Material theme](https://squidfunk.github.io/mkdocs-material/).
 
 Markdown source lives in [`docs-src/`](docs-src/index.md). A GitHub Actions workflow
@@ -48,7 +48,7 @@ add-in starts using APIs introduced in the newer release.
 
 ## Building
 
-Open `KylidarAddin.csproj` in Visual Studio and build (F5 launches ArcGIS Pro
+Open `StaclidarAddin.csproj` in Visual Studio and build (F5 launches ArcGIS Pro
 with the add-in loaded).
 
 Note: this must be built with Visual Studio's MSBuild, not the `dotnet` CLI.
@@ -57,5 +57,5 @@ The ArcGIS Pro SDK's packaging step uses `CodeTaskFactory`, which the .NET
 build with:
 
 ```
-"C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe" KylidarAddin.csproj -t:Build -p:Configuration=Debug
+"C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe" StaclidarAddin.csproj -t:Build -p:Configuration=Debug
 ```

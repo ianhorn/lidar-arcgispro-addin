@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ArcGIS defaultAssembly="KylidarAddin.dll" defaultNamespace="KylidarAddin"
+<ArcGIS defaultAssembly="StaclidarAddin.dll" defaultNamespace="StaclidarAddin"
         xmlns="http://schemas.esri.com/DADF/Registry"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://schemas.esri.com/DADF/Registry file:///C:/Program%20Files/ArcGIS/Pro/bin/ArcGIS.Desktop.Framework.xsd">
 
   <AddInInfo id="{f2cadbcc-46f7-48b0-8cb4-9b56b3eb038d}" version="1.3.2.0" desktopVersion="3.6.0" product="ArcGISPro">
-    <Name>Kylidar Add-in</Name>
-    <Description>Kylidar Add-in description</Description>
+    <Name>Staclidar Add-in</Name>
+    <Description>Staclidar Add-in description</Description>
     <Image>Images\AddInDesktop32.png</Image>
     <Author>Ian Horn</Author>
-    <Company>Kylidar</Company>
+    <Company>Staclidar</Company>
     <Date>9/7/2026</Date>
     <Subject>Framework</Subject>
     <!-- Note subject can be one or more of these topics:
@@ -17,52 +17,52 @@
   </AddInInfo>
 
   <modules>
-    <insertModule id="KylidarAddin_Module" className="Module1" autoLoad="false" caption="Module1">
+    <insertModule id="StaclidarAddin_Module" className="Module1" autoLoad="false" caption="Module1">
       <tabs>
-        <tab id="KylidarAddin_Tab1" caption="Kylidar" keytip="K0">
-          <group refID="KylidarAddin_GroupMain"/>
+        <tab id="StaclidarAddin_Tab1" caption="Staclidar" keytip="K0">
+          <group refID="StaclidarAddin_GroupMain"/>
         </tab>
       </tabs>
 
       <groups>
-        <group id="KylidarAddin_GroupMain" caption="Kylidar" appearsOnAddInTab="false" keytip="G1">
-          <button refID="KylidarAddin_Dockpane_ShowButton" size="large"/>
+        <group id="StaclidarAddin_GroupMain" caption="Staclidar" appearsOnAddInTab="false" keytip="G1">
+          <button refID="StaclidarAddin_Dockpane_ShowButton" size="large"/>
         </group>
       </groups>
 
       <controls>
         <!-- These AOI tools are not placed in a group (so they don't appear on the ribbon);
-             they're activated from the Kylidar dock pane via FrameworkApplication.SetCurrentToolAsync,
+             they're activated from the Staclidar dock pane via FrameworkApplication.SetCurrentToolAsync,
              which resolves them by the ID registered here. -->
-        <tool id="KylidarAddin_DrawPointAoiTool" caption="Draw Point AOI" className="DrawPointAoiTool"
+        <tool id="StaclidarAddin_DrawPointAoiTool" caption="Draw Point AOI" className="DrawPointAoiTool"
               loadOnClick="true" condition="esri_mapping_mapPane"
               smallImage="Images\DrawPointAoi16.png" largeImage="Images\DrawPointAoi32.png">
           <tooltip heading="Draw Point AOI">Draw a point to use as the LiDAR clip AOI.<disabledText /></tooltip>
         </tool>
-        <tool id="KylidarAddin_DrawLineAoiTool" caption="Draw Line AOI" className="DrawLineAoiTool"
+        <tool id="StaclidarAddin_DrawLineAoiTool" caption="Draw Line AOI" className="DrawLineAoiTool"
               loadOnClick="true" condition="esri_mapping_mapPane"
               smallImage="Images\DrawLineAoi16.png" largeImage="Images\DrawLineAoi32.png">
           <tooltip heading="Draw Line AOI">Draw a line to use as the LiDAR clip AOI.<disabledText /></tooltip>
         </tool>
-        <tool id="KylidarAddin_DrawPolygonAoiTool" caption="Draw Polygon AOI" className="DrawPolygonAoiTool"
+        <tool id="StaclidarAddin_DrawPolygonAoiTool" caption="Draw Polygon AOI" className="DrawPolygonAoiTool"
               loadOnClick="true" condition="esri_mapping_mapPane"
               smallImage="Images\DrawPolygonAoi16.png" largeImage="Images\DrawPolygonAoi32.png">
           <tooltip heading="Draw Polygon AOI">Draw a polygon to use as the LiDAR clip AOI.<disabledText /></tooltip>
         </tool>
-        <tool id="KylidarAddin_SelectFeatureAoiTool" caption="Select Feature AOI" className="SelectFeatureAoiTool"
+        <tool id="StaclidarAddin_SelectFeatureAoiTool" caption="Select Feature AOI" className="SelectFeatureAoiTool"
               loadOnClick="true" condition="esri_mapping_mapPane"
               smallImage="Images\SelectFeatureAoi16.png" largeImage="Images\SelectFeatureAoi32.png">
           <tooltip heading="Select Feature AOI">Click (or drag a box over) an existing feature to use its geometry as the LiDAR clip AOI.<disabledText /></tooltip>
         </tool>
-        <button id="KylidarAddin_Dockpane_ShowButton" caption="Kylidar" className="KylidarDockpaneShowButton"
+        <button id="StaclidarAddin_Dockpane_ShowButton" caption="Staclidar" className="StaclidarDockpaneShowButton"
                 loadOnClick="true" smallImage="Images\AddInDesktop16.png" largeImage="Images\AddInDesktop32.png">
-          <tooltip heading="Kylidar">Open the Kylidar pane to draw/select an AOI, set clip options, and run the clip.<disabledText /></tooltip>
+          <tooltip heading="Staclidar">Open the Staclidar pane to draw/select an AOI, set clip options, and run the clip.<disabledText /></tooltip>
         </button>
       </controls>
 
       <dockPanes>
-        <dockPane id="KylidarAddin_Dockpane" caption="Kylidar" className="KylidarDockpaneViewModel" dock="group" dockWith="esri_core_projectDockPane">
-          <content className="KylidarDockpaneView" />
+        <dockPane id="StaclidarAddin_Dockpane" caption="Staclidar" className="StaclidarDockpaneViewModel" dock="group" dockWith="esri_core_projectDockPane">
+          <content className="StaclidarDockpaneView" />
         </dockPane>
       </dockPanes>
 

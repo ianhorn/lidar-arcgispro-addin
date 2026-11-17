@@ -1,9 +1,9 @@
-<UserControl x:Class="KylidarAddin.KylidarDockpaneView"
+<UserControl x:Class="StaclidarAddin.StaclidarDockpaneView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:local="clr-namespace:KylidarAddin"
+             xmlns:local="clr-namespace:StaclidarAddin"
              mc:Ignorable="d"
              d:DesignHeight="640" d:DesignWidth="300">
     <!--
@@ -41,7 +41,7 @@
                 <Button Content="Feedback" Command="{Binding FeedbackCommand}" Padding="10,3" Margin="0,0,6,0"
                         ToolTip="Report a bug, request a feature, or send feedback directly."/>
                 <Button Content="Help" Command="{Binding HelpCommand}" Padding="10,3" Margin="0,0,6,0"
-                        ToolTip="Open the Kylidar documentation site."/>
+                        ToolTip="Open the Staclidar documentation site."/>
                 <Button Content="Check version" Command="{Binding CheckVersionCommand}" Padding="10,3"
                         ToolTip="Compare this build with the latest published release."/>
             </StackPanel>
@@ -68,7 +68,7 @@
             <WrapPanel Orientation="Horizontal" Margin="0,0,0,6">
                 <CheckBox Content="Phase 1" IsChecked="{Binding Phase1}" IsEnabled="False" VerticalAlignment="Center"/>
                 <Button Content="i" Style="{StaticResource InfoButtonStyle}" Margin="3,0,10,0"
-                        ToolTip="Phase 1 is disabled: its tiles are regular LAZ files, not COPC (cloud-optimized) like Phase 2 and 3, so Kylidar can't read or clip them. Download Phase 1 with the kyfromabove-stac-addin instead (https://ianhorn.github.io/kyfromabove-stac-addin/)."/>
+                        ToolTip="Phase 1 is disabled: its tiles are regular LAZ files, not COPC (cloud-optimized) like Phase 2 and 3, so Staclidar can't read or clip them. Download Phase 1 with the kyfromabove-stac-addin instead (https://ianhorn.github.io/kyfromabove-stac-addin/)."/>
                 <CheckBox Content="Phase 2" IsChecked="{Binding Phase2}" Margin="0,0,10,0"/>
                 <CheckBox Content="Phase 3" IsChecked="{Binding Phase3}" Margin="0,0,14,0"/>
                 <Button Content="Search Catalog" Command="{Binding SearchCatalogCommand}" Padding="10,3" Margin="0,2,0,0"/>

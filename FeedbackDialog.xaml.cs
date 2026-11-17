@@ -8,9 +8,9 @@ using System.Diagnostics;
 using System.Threading;
 using System.Windows;
 using System.Windows.Media;
-using KylidarAddin.Services;
+using StaclidarAddin.Services;
 
-namespace KylidarAddin
+namespace StaclidarAddin
 {
     public partial class FeedbackDialog : Window
     {
@@ -34,7 +34,7 @@ namespace KylidarAddin
             catch (Exception ex)
             {
                 MessageBox.Show($"Couldn't open the browser: {ex.Message}\n\nYou can file an issue directly at {FeedbackService.RepoUrl}/issues.",
-                    "Kylidar", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    "Staclidar", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             Close();

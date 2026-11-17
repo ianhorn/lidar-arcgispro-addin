@@ -18,7 +18,7 @@ using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Layouts;
 using ArcGIS.Desktop.Mapping;
 
-namespace KylidarAddin
+namespace StaclidarAddin
 {
     internal class Module1 : Module
     {
@@ -27,7 +27,7 @@ namespace KylidarAddin
         /// <summary>
         /// Retrieve the singleton instance to this module here
         /// </summary>
-        public static Module1 Current => _this ??= (Module1)FrameworkApplication.FindModule("KylidarAddin_Module");
+        public static Module1 Current => _this ??= (Module1)FrameworkApplication.FindModule("StaclidarAddin_Module");
 
         #region Overrides
         /// <summary>

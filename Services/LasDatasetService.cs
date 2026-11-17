@@ -13,7 +13,7 @@ using ArcGIS.Desktop.Core.Geoprocessing;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Mapping;
 
-namespace KylidarAddin.Services
+namespace StaclidarAddin.Services
 {
     public static class LasDatasetService
     {

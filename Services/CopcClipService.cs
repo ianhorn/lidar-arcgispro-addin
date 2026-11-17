@@ -39,9 +39,9 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using ArcGIS.Core.Geometry;
-using KylidarAddin.Stac;
+using StaclidarAddin.Stac;
 
-namespace KylidarAddin.Services
+namespace StaclidarAddin.Services
 {
     public class ClipResult
     {
@@ -139,7 +139,7 @@ namespace KylidarAddin.Services
         /// <summary>One API source plus which of its collections to search -- the built-in KyFromAbove
         /// source always searches its known laz-phase1/2/3 collections; another source would
         /// search whichever collections it is given (see
-        /// KylidarDockpaneViewModel.BuildSourceCollections). Every public search entry point below
+        /// StaclidarDockpaneViewModel.BuildSourceCollections). Every public search entry point below
         /// takes a list of these instead of a flat collection-ID list, so a run can combine tiles
         /// from more than one STAC API in a single search/download/convert pass.</summary>
         public readonly struct SourceCollections
@@ -308,7 +308,7 @@ namespace KylidarAddin.Services
                 }
                 else
                 {
-                    tempDir = Path.Combine(Path.GetTempPath(), $"kylidar_{Guid.NewGuid():N}");
+                    tempDir = Path.Combine(Path.GetTempPath(), $"staclidar_{Guid.NewGuid():N}");
                     Directory.CreateDirectory(tempDir);
                     rawTilesDir = tempDir;
                 }

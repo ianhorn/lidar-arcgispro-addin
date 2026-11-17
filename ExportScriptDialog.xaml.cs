@@ -1,18 +1,18 @@
 /*
  * Modal dialog for "Export Script": lets the user pick the output format (Python, Jupyter
  * notebook, PowerShell, shell, or a stand-alone executable) and the destination folder before
- * KylidarDockpaneViewModel actually writes the kit. Modeled directly on kyfromabove-ext's
+ * StaclidarDockpaneViewModel actually writes the kit. Modeled directly on kyfromabove-ext's
  * ExportScriptDialog -- including the "Executable" option, backed by this add-in's own
- * tools\KylidarDownloader\ (extended with the convert/crop step that add-in has no need for).
+ * tools\StaclidarDownloader\ (extended with the convert/crop step that add-in has no need for).
  */
 using System.Collections.Generic;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using KylidarAddin.Services;
+using StaclidarAddin.Services;
 
-namespace KylidarAddin
+namespace StaclidarAddin
 {
     public partial class ExportScriptDialog : Window
     {

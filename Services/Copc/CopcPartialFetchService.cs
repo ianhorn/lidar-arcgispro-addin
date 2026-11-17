@@ -8,7 +8,7 @@
  *
  * Validated against a real 106MB Kentucky COPC tile before this was ported to C#: a Python
  * prototype using this exact technique produced a point count that matched a full-file crop
- * exactly (813,676 points, same AOI) -- see the kylidar-addin plan history for the spike.
+ * exactly (813,676 points, same AOI) -- see the lidar-arcgispro-addin plan history for the spike.
  *
  * Anything unexpected throws CopcPartialFetchException; callers should catch it and fall back to
  * a full download for that tile. This path is strictly a bandwidth optimization, never a
@@ -24,7 +24,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace KylidarAddin.Services.Copc
+namespace StaclidarAddin.Services.Copc
 {
     public class CopcPartialFetchException : Exception
     {

@@ -1,13 +1,13 @@
 /*
  * Backs the dock pane's "Check version" button: compares this build's version with the latest
- * published GitHub release (https://github.com/ianhorn/kylidar-addin/releases), so someone running
+ * published GitHub release (https://github.com/ianhorn/lidar-arcgispro-addin/releases), so someone running
  * a downloaded .esriAddinX can tell whether a newer one exists without visiting the repo.
  *
  * Uses GitHub's public, unauthenticated API (60 requests/hour per IP -- plenty for a button click).
  * /releases/latest skips drafts and pre-releases, which is what "newest download" should mean.
  *
  * The comparison is only meaningful if each release's build carries that release's version: the
- * <Version> in KylidarAddin.csproj must be bumped to match the tag BEFORE building a release (see
+ * <Version> in StaclidarAddin.csproj must be bumped to match the tag BEFORE building a release (see
  * docs-src/installation.md, "Publishing a rebuilt download"). Revision is ignored when comparing
  * (the default assembly version 1.0.0.0 equals tag v1.0.0).
  */
@@ -17,7 +17,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace KylidarAddin.Services
+namespace StaclidarAddin.Services
 {
     public sealed record UpdateCheckResult(Version Current, Version Latest, string ReleaseUrl)
     {
@@ -26,7 +26,7 @@ namespace KylidarAddin.Services
 
     public static class UpdateCheckService
     {
-        private const string LatestReleaseApi = "https://api.github.com/repos/ianhorn/kylidar-addin/releases/latest";
+        private const string LatestReleaseApi = "https://api.github.com/repos/ianhorn/lidar-arcgispro-addin/releases/latest";
         public const string ReleasesPage = FeedbackService.RepoUrl + "/releases";
 
         private static readonly HttpClient Http = CreateClient();
@@ -34,7 +34,7 @@ namespace KylidarAddin.Services
         private static HttpClient CreateClient()
         {
             var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
-            http.DefaultRequestHeaders.UserAgent.ParseAdd("KylidarAddin/1.0"); // GitHub's API rejects requests without one
+            http.DefaultRequestHeaders.UserAgent.ParseAdd("StaclidarAddin/1.0"); // GitHub's API rejects requests without one
             http.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
             return http;
         }

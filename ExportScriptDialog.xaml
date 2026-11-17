@@ -1,4 +1,4 @@
-<Window x:Class="KylidarAddin.ExportScriptDialog"
+<Window x:Class="StaclidarAddin.ExportScriptDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Export Script"
@@ -8,7 +8,7 @@
         ShowInTaskbar="False"
         Background="White">
     <!--
-      Standalone Window (unlike KylidarDockpaneView, a UserControl docked inside Pro's own window),
+      Standalone Window (unlike StaclidarDockpaneView, a UserControl docked inside Pro's own window),
       so it sits outside Pro's resource dictionaries and needs explicit colors: Pro's implicit
       dark-theme ControlTemplates otherwise leave parts of it dark-on-dark. Modeled directly on
       kyfromabove-ext's ExportScriptDialog (same add-in family, same "stand-alone download kit"

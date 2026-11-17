@@ -2,7 +2,7 @@
 
   <!--
     Stand-alone downloader/converter bundled into the add-in package (see the Content item in
-    ..\..\KylidarAddin.csproj) and offered as the "Executable (.exe)" option in Export Script.
+    ..\..\StaclidarAddin.csproj) and offered as the "Executable (.exe)" option in Export Script.
     Reads its manifest (see TryReadEmbeddedManifest) and downloads, then optionally converts/crops
     via the "pdal" CLI, every listed tile: no ArcGIS Pro, and (published self-contained/single-file,
     as the add-in bundles it) no .NET runtime install, required on the machine that runs it. Modeled
@@ -14,7 +14,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>KylidarDownloader</AssemblyName>
+    <AssemblyName>StaclidarDownloader</AssemblyName>
     <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
 

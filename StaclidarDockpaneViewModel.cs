@@ -35,17 +35,17 @@ using ArcGIS.Desktop.Framework;
 using ArcGIS.Desktop.Framework.Contracts;
 using ArcGIS.Desktop.Framework.Threading.Tasks;
 using ArcGIS.Desktop.Mapping;
-using KylidarAddin.Services;
-using KylidarAddin.Stac;
+using StaclidarAddin.Services;
+using StaclidarAddin.Stac;
 using Microsoft.Win32;
 
-namespace KylidarAddin
+namespace StaclidarAddin
 {
-    internal class KylidarDockpaneViewModel : DockPane
+    internal class StaclidarDockpaneViewModel : DockPane
     {
-        private const string DockPaneId = "KylidarAddin_Dockpane";
+        private const string DockPaneId = "StaclidarAddin_Dockpane";
 
-        protected KylidarDockpaneViewModel()
+        protected StaclidarDockpaneViewModel()
         {
             try
             {
@@ -125,7 +125,7 @@ namespace KylidarAddin
             catch (Exception ex)
             {
                 MessageBox.Show($"Couldn't use the current extent as an AOI: {ex.Message}",
-                    "Kylidar", MessageBoxButton.OK, MessageBoxImage.Error);
+                    "Staclidar", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -162,7 +162,7 @@ namespace KylidarAddin
                 if (geometry == null)
                 {
                     MessageBox.Show("That file has no features to use as an AOI.",
-                        "Kylidar", MessageBoxButton.OK, MessageBoxImage.Information);
+                        "Staclidar", MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
                 }
                 AoiState.Set(geometry, $"AOI from {item.Name}");
@@ -170,7 +170,7 @@ namespace KylidarAddin
             catch (Exception ex)
             {
                 MessageBox.Show($"Couldn't use \"{item.Name}\" as an AOI: {ex.Message}",
-                    "Kylidar", MessageBoxButton.OK, MessageBoxImage.Error);
+                    "Staclidar", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -195,22 +195,22 @@ namespace KylidarAddin
                 var r = await UpdateCheckService.CheckAsync();
                 if (!r.IsNewerAvailable)
                 {
-                    MessageBox.Show($"You're up to date: Kylidar {r.Current} is the latest release.",
-                        "Kylidar", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show($"You're up to date: Staclidar {r.Current} is the latest release.",
+                        "Staclidar", MessageBoxButton.OK, MessageBoxImage.Information);
                     return;
                 }
 
                 var open = MessageBox.Show(
                     $"A newer version is available.\n\nInstalled: {r.Current}\nLatest: {r.Latest}\n\nOpen the release page to download it? " +
                     "(Close ArcGIS Pro before installing the new .esriAddinX.)",
-                    "Kylidar", MessageBoxButton.YesNo, MessageBoxImage.Information);
+                    "Staclidar", MessageBoxButton.YesNo, MessageBoxImage.Information);
                 if (open == MessageBoxResult.Yes)
                     Process.Start(new ProcessStartInfo(r.ReleaseUrl) { UseShellExecute = true });
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Couldn't check for a newer version: {ex.Message}\n\nYou can check manually at {UpdateCheckService.ReleasesPage}",
-                    "Kylidar", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    "Staclidar", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
@@ -227,7 +227,7 @@ namespace KylidarAddin
             catch (Exception ex)
             {
                 MessageBox.Show($"Couldn't open the browser: {ex.Message}\n\nYou can find the docs directly at {FeedbackService.DocsSiteUrl}",
-                    "Kylidar", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    "Staclidar", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
 
@@ -235,7 +235,7 @@ namespace KylidarAddin
 
         #region STAC API source
 
-        /// <summary>Kylidar searches only the KyFromAbove catalog (a fresh StacClient, cheap since
+        /// <summary>Staclidar searches only the KyFromAbove catalog (a fresh StacClient, cheap since
         /// its HttpClient/JsonSerializerOptions are static underneath). The service layer still takes
         /// a list of (source, collections) pairs.</summary>
         private readonly StacApiSource _kyFromAbove = new StacApiSource("KyFromAbove", new StacClient(), isDefault: true);
@@ -541,14 +541,14 @@ namespace KylidarAddin
         }
 
         private static string DefaultOutputFolder() =>
-            Path.Combine(DefaultWorkspaceFolder(), $"kylidar_clip_{DateTime.Now:yyyyMMdd_HHmmss}");
+            Path.Combine(DefaultWorkspaceFolder(), $"staclidar_clip_{DateTime.Now:yyyyMMdd_HHmmss}");
 
         /// <summary>The current project's own home folder (the directory holding the .aprx) when a
         /// project is open, rather than the Windows user temp directory -- and specifically NOT
         /// ArcGIS Pro's own per-session scratch folder (e.g. ...\Temp\ArcGISProTempNNNN\, which
         /// Path.GetTempPath() resolves into here, since Pro sets TEMP/TMP for its own process): Pro
         /// deletes that folder when it closes, which would silently lose any downloaded/converted
-        /// output left there. Each call site appends its own kylidar_clip_&lt;timestamp&gt; name, so
+        /// output left there. Each call site appends its own staclidar_clip_&lt;timestamp&gt; name, so
         /// separate runs still land in their own folder rather than overwriting one another. Falls
         /// back to the plain Windows temp directory if there's no open project or no home folder.</summary>
         private static string DefaultWorkspaceFolder()
@@ -667,7 +667,7 @@ namespace KylidarAddin
         public bool CanAddBreaklines => SelectedDatasetAction != DatasetAction.None;
 
         private static string DefaultNewDatasetPath() =>
-            Path.Combine(DefaultWorkspaceFolder(), $"kylidar_clip_{DateTime.Now:yyyyMMdd_HHmmss}.lasd");
+            Path.Combine(DefaultWorkspaceFolder(), $"staclidar_clip_{DateTime.Now:yyyyMMdd_HHmmss}.lasd");
 
         #region LAS dataset coordinate system
 
@@ -904,18 +904,18 @@ namespace KylidarAddin
                 string outputPath;
                 if (dlg.SelectedFormat == ExportScriptFormat.Executable)
                 {
-                    // The exe is a separate console project (tools\KylidarDownloader\), pre-built
+                    // The exe is a separate console project (tools\StaclidarDownloader\), pre-built
                     // and bundled into this add-in's own package -- see the Content item in
-                    // KylidarAddin.csproj -- so it lands right next to this assembly on disk.
+                    // StaclidarAddin.csproj -- so it lands right next to this assembly on disk.
                     var sourceExe = Path.Combine(
                         Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? "",
-                        "KylidarDownloader.exe");
+                        "StaclidarDownloader.exe");
                     if (!File.Exists(sourceExe))
                     {
-                        ExportScriptStatusText = "Could not find the bundled KylidarDownloader.exe alongside this add-in.";
+                        ExportScriptStatusText = "Could not find the bundled StaclidarDownloader.exe alongside this add-in.";
                         return;
                     }
-                    var destExe = Path.Combine(dlg.DestinationFolder, $"kylidar_export_{DateTime.Now:yyyyMMdd_HHmmss}.exe");
+                    var destExe = Path.Combine(dlg.DestinationFolder, $"staclidar_export_{DateTime.Now:yyyyMMdd_HHmmss}.exe");
                     File.Copy(sourceExe, destExe, overwrite: true);
 
                     // Append the manifest straight onto the copied exe (see AppendEmbeddedManifest)
@@ -937,7 +937,7 @@ namespace KylidarAddin
                         ExportScriptFormat.Shell => ".sh",
                         _ => ".py"
                     };
-                    var scriptPath = Path.Combine(dlg.DestinationFolder, $"kylidar_export_{DateTime.Now:yyyyMMdd_HHmmss}{ext}");
+                    var scriptPath = Path.Combine(dlg.DestinationFolder, $"staclidar_export_{DateTime.Now:yyyyMMdd_HHmmss}{ext}");
                     await File.WriteAllTextAsync(scriptPath, script);
                     outputPath = scriptPath;
                 }
@@ -952,7 +952,7 @@ namespace KylidarAddin
             }
         }
 
-        /// <summary>Manifest consumed by the bundled KylidarDownloader.exe (tools\KylidarDownloader\Program.cs).</summary>
+        /// <summary>Manifest consumed by the bundled StaclidarDownloader.exe (tools\StaclidarDownloader\Program.cs).</summary>
         private static string BuildDownloaderManifest(
             IReadOnlyList<string> tileUrls, string destFolder, bool convert, bool discardRaw, IReadOnlyList<string> cropWktParts,
             PointFilter pointFilter)
@@ -970,12 +970,12 @@ namespace KylidarAddin
             return System.Text.Json.JsonSerializer.Serialize(manifest);
         }
 
-        // Must match KylidarDownloader's read side (tools\KylidarDownloader\Program.cs,
+        // Must match StaclidarDownloader's read side (tools\StaclidarDownloader\Program.cs,
         // TryReadEmbeddedManifest) exactly: 8-byte ASCII magic at EOF, preceded by the 8-byte
         // little-endian byte-length of the JSON payload, which sits right before that.
         private static readonly byte[] ManifestFooterMagic = System.Text.Encoding.ASCII.GetBytes("KYLDMAN1");
 
-        /// <summary>Append a manifest payload to a copy of KylidarDownloader.exe so it's a single, self-contained file (see ManifestFooterMagic).</summary>
+        /// <summary>Append a manifest payload to a copy of StaclidarDownloader.exe so it's a single, self-contained file (see ManifestFooterMagic).</summary>
         private static void AppendEmbeddedManifest(string exePath, string manifestJson)
         {
             var jsonBytes = System.Text.Encoding.UTF8.GetBytes(manifestJson);
@@ -1223,12 +1223,12 @@ namespace KylidarAddin
         #endregion
     }
 
-    /// <summary>Ribbon entry point that activates the Kylidar dock pane.</summary>
-    internal class KylidarDockpaneShowButton : Button
+    /// <summary>Ribbon entry point that activates the Staclidar dock pane.</summary>
+    internal class StaclidarDockpaneShowButton : Button
     {
         protected override void OnClick()
         {
-            try { KylidarDockpaneViewModel.Show(); }
+            try { StaclidarDockpaneViewModel.Show(); }
             catch (Exception ex) { StartupLog.Report("opening the pane", ex); throw; }
         }
     }
