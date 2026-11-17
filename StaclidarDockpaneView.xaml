@@ -76,13 +76,19 @@
             </Grid>
             <TextBlock Text="{Binding CollectionsStatusText}" TextWrapping="Wrap" Margin="0,0,0,2"
                        Visibility="{Binding CollectionsStatusText, Converter={StaticResource StringToVis}}"/>
-            <ItemsControl ItemsSource="{Binding Collections}" Margin="0,0,0,6" Visibility="{Binding HasCollections, Converter={StaticResource BoolToVis}}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <CheckBox Content="{Binding Title}" IsChecked="{Binding IsChecked}" Margin="0,1,0,1" ToolTip="{Binding Id}"/>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+            <!-- A catalog can have hundreds of collections: cap the list's height and let it scroll. -->
+            <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                          Margin="0,0,0,6" Visibility="{Binding HasCollections, Converter={StaticResource BoolToVis}}">
+                <ItemsControl ItemsSource="{Binding Collections}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox IsChecked="{Binding IsChecked}" Margin="0,1,0,1" ToolTip="{Binding Id}">
+                                <TextBlock Text="{Binding Title}" TextWrapping="Wrap"/>
+                            </CheckBox>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
             <WrapPanel Orientation="Horizontal" Margin="0,0,0,6">
                 <Button Content="Search Catalog" Command="{Binding SearchCatalogCommand}" Padding="10,3" Margin="0,2,0,0"/>
             </WrapPanel>
