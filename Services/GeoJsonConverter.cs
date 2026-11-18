@@ -42,6 +42,38 @@ namespace StaclidarAddin.Services
         }
 
         /// <summary>
+        /// GeoJSON for a search 'intersects' parameter, kept under <paramref name="maxChars"/>. A detailed outline
+        /// (a buffered state boundary can have hundreds of thousands of vertices) makes the request body too large
+        /// for the API (HTTP 413), so the geometry is generalized with a growing tolerance until it fits, then
+        /// falls back to its bounding box. <paramref name="toleranceDegrees"/> is 0 when nothing was simplified and
+        /// -1 when the bounding box was used. Only the search uses this: the PDAL crop keeps the full outline.
+        /// </summary>
+        public static string ToGeoJsonWithinBudget(Geometry geometry, int maxChars, out double toleranceDegrees)
+        {
+            toleranceDegrees = 0;
+            var json = ToGeoJsonGeometry(geometry);
+            if (json == null || json.Length <= maxChars || geometry is MapPoint) return json;
+
+            // Start around 10 m and double.
+            for (double tolerance = 0.0001; tolerance <= 0.05; tolerance *= 2)
+            {
+                var simplified = GeometryEngine.Instance.Generalize(geometry, tolerance, true, false);
+                if (simplified == null || simplified.IsEmpty) break;
+                var candidate = ToGeoJsonGeometry(simplified);
+                if (candidate.Length <= maxChars)
+                {
+                    toleranceDegrees = tolerance;
+                    return candidate;
+                }
+            }
+
+            var e = geometry.Extent;
+            toleranceDegrees = -1;
+            return "{\"type\":\"Polygon\",\"coordinates\":[" + string.Format(CultureInfo.InvariantCulture,
+                "[[{0},{1}],[{2},{1}],[{2},{3}],[{0},{3}],[{0},{1}]]", e.XMin, e.YMin, e.XMax, e.YMax) + "]}";
+        }
+
+        /// <summary>
         /// Convert a (possibly multi-part) polygon to one WKT "POLYGON(...)" string per part, for
         /// PDAL's crop options. The geometry should already be projected to WGS84 (lon/lat), same
         /// as ToGeoJsonGeometry. Non-polygon input (shouldn't happen -- AOIs are always buffered to

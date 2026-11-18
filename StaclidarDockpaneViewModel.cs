@@ -394,11 +394,17 @@ namespace StaclidarAddin
                 var (count, hitLimit) = await CopcClipService.SearchTileCountAsync(aoiInfo.GeoJson, sources, searchLimit);
                 FoundTileCount = count;
                 SearchHitLimit = hitLimit;
+                var simplifiedNote = aoiInfo.SearchSimplifiedByDegrees == 0
+                    ? ""
+                    : aoiInfo.SearchSimplifiedByDegrees < 0
+                        ? " (The AOI is very detailed, so its bounding box was used for the search.)"
+                        : $" (The AOI is very detailed, so it was simplified by up to ~{aoiInfo.SearchSimplifiedByDegrees * 111000:F0} m for the search.)";
                 CatalogSearchStatusText = count == 0
                     ? "No LiDAR coverage found for this AOI in the selected collection(s)."
                     : hitLimit
                         ? $"Found {count} LiDAR tile(s) -- hit the {searchLimit}-tile search limit, there may be more. Raise the limit below and search again."
                         : $"Found {count} LiDAR tile(s) intersecting the AOI.";
+                CatalogSearchStatusText += simplifiedNote;
             }
             catch (Exception ex)
             {

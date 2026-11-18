@@ -55,6 +55,9 @@ namespace StaclidarAddin.Services
     public class AoiSearchInfo
     {
         public string GeoJson { get; set; }
+        /// <summary>0 when GeoJson is the AOI as drawn; the generalization tolerance in degrees when a very
+        /// detailed outline was simplified to keep the search request small; -1 when its bounding box was used.</summary>
+        public double SearchSimplifiedByDegrees { get; set; }
         public IReadOnlyList<string> CropWktParts { get; set; }
         /// <summary>The geometry the tile search used, in the AOI's own spatial reference: the AOI
         /// itself, or its buffer when clipping with a buffer. A polygon here is what breaklines are
@@ -109,6 +112,8 @@ namespace StaclidarAddin.Services
         /// polygon AOI already has an area, so when clipping is on but no buffer was given, the
         /// polygon's own boundary is used as-is (bufferFeet is 0 or unparsed).
         /// </summary>
+        private const int MaxSearchGeoJsonChars = 100_000;
+
         public static AoiSearchInfo PrepareAoi(Geometry aoi, bool clipToAoi, double bufferFeet)
         {
             var searchGeometry = aoi;
@@ -125,7 +130,9 @@ namespace StaclidarAddin.Services
             }
 
             var searchWgs84 = (Geometry)GeometryEngine.Instance.Project(searchGeometry, SpatialReferences.WGS84);
-            var info = new AoiSearchInfo { GeoJson = GeoJsonConverter.ToGeoJsonGeometry(searchWgs84), SearchGeometry = searchGeometry };
+            // The search body is size-limited by the API (HTTP 413 for a very detailed outline); the PDAL crop below is not.
+            var geoJson = GeoJsonConverter.ToGeoJsonWithinBudget(searchWgs84, MaxSearchGeoJsonChars, out var simplifiedBy);
+            var info = new AoiSearchInfo { GeoJson = geoJson, SearchSimplifiedByDegrees = simplifiedBy, SearchGeometry = searchGeometry };
             if (clipToAoi)
                 info.CropWktParts = GeoJsonConverter.ToWktParts(searchWgs84);
             return info;
