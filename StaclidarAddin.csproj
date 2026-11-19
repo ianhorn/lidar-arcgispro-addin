@@ -15,7 +15,7 @@
       version" button (see UpdateCheckService). Bump this to match the tag BEFORE building a release,
       or the released build would report itself as out of date.
     -->
-    <Version>1.3.2</Version>
+    <Version>1.4.0</Version>
     <RootNamespace>StaclidarAddin</RootNamespace>
     <PackageType>Addin</PackageType>
     <!--
